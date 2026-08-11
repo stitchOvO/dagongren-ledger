@@ -28,7 +28,7 @@
   --radius-sm: 10px;
   --radius-xs: 7px;
   --font: -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;
-  --sidebar-w: 240px;
+  --sidebar-w: 260px;
   --header-h: 60px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -51,8 +51,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--mint);box-shadow:0 0 
 .sidebar-brand h1{font-size:16px;font-weight:700;color:var(--mint-dark);white-space:nowrap}
 .sidebar-nav{flex:1;padding:10px 12px;display:flex;flex-direction:column;gap:3px}
 .nav-item{
-  display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--radius-sm);
-  font-size:14px;color:var(--text-light);font-weight:500;transition:all .15s;white-space:nowrap;
+  display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--radius-sm);min-width:0;
+  font-size:14px;color:var(--text-light);font-weight:500;transition:all .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .nav-item:hover{background:var(--bg);color:var(--text)}
 .nav-item.active{background:var(--mint-light);color:var(--mint-dark);font-weight:600}
@@ -230,7 +230,7 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
     <button class="nav-item" data-page="settings"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>设置</button>
   </nav>
   <div class="sidebar-footer" id="sidebarInfo">
-    <div class="kv"><span style="font-weight:700;color:var(--mint-dark);font-size:12px">© zzh工作室 · 2026</span><span id="sbStorage"></span></div>
+    <div class="kv"><span>(c) zzh工作室 · 2026</span><span id="sbStorage"></span></div>
   </div>
 </aside>
 
@@ -605,7 +605,7 @@ function navigateTo(page){
 }
 function renderAll(){
   try{switch(currentPage){case'home':renderHome();break;case'record':renderRecord();break;case'wage':renderWage();break;case'savings':renderSavings();break;case'sim':renderSim();break;case'sync':renderSync();break;case'settings':renderSettings();break}}catch(e){const ca=$('#contentArea');if(ca)ca.innerHTML='<div style="text-align:center;padding:60px;color:var(--text-lighter)"><p style="font-size:40px">😵</p><p>页面异常</p><button class="btn btn-outline btn-sm" style="margin-top:12px" onclick="navigateTo(\'settings\')">前往设置</button></div>'}
-  const a=$('#contentArea');if(a&&!a.querySelector('.zzh-copy'))a.innerHTML+='<div style="text-align:center;font-size:11px;color:var(--text-lighter);padding:16px 0 4px" class="zzh-copy">© zzh工作室 · 2026</div>';
+  const a=$('#contentArea');if(a&&!a.querySelector('.zzh-copy'))a.innerHTML+='<div style="text-align:center;font-size:11px;color:var(--text-lighter);padding:16px 0 4px" class="zzh-copy">(c) zzh工作室 · 2026</div>';
 }
 document.addEventListener('click',function(e){const n=e.target.closest('.nav-item');if(n)navigateTo(n.dataset.page)});
 document.addEventListener('keydown',function(e){

@@ -1213,7 +1213,7 @@ function renderSettings(){
       🐷 <b>打工人小账本</b> · 离线版<br>
       纯前端单文件，数据保存在浏览器本地<br>
       不依赖任何后端、CDN 或在线服务<br>
-      由zzh工作室 生成 · ${new Date().getFullYear()}
+      由(c) zzh工作室 · 2026 生成 · ${new Date().getFullYear()}
     </div>
   </div>`;
 
@@ -1304,7 +1304,7 @@ function renderAll(){
     console.error('[Ledger] renderAll error for page',currentPage,':',e);
     const ca=$('#contentArea');if(ca)ca.innerHTML='<div style="text-align:center;padding:60px 20px;color:var(--text-lighter)"><p style="font-size:48px;margin-bottom:16px">😵</p><p>页面加载异常</p><p style="font-size:12px;margin-top:8px">请尝试刷新页面或清除数据</p><button class="btn btn-outline btn-sm" style="margin-top:16px" onclick="navigateTo(\'settings\')">前往设置</button></div>';
   }
-  const a=$('#contentArea');if(a){const ex=a.querySelector('.zzh-copy');if(!ex)a.innerHTML+='<div style="text-align:center;font-size:11px;color:var(--text-lighter);padding:12px 0 4px" class="zzh-copy">zzh工作室 · 2026</div>'}
+  const a=$('#contentArea');if(a){const ex=a.querySelector('.zzh-copy');if(!ex)a.innerHTML+='<div style="text-align:center;font-size:11px;color:var(--text-lighter);padding:12px 0 4px" class="zzh-copy">(c) zzh工作室 · 2026 · 2026</div>'}
 }
 
 // --- Navigation Events ---
