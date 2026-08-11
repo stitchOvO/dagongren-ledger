@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="format-detection" content="telephone=no">
+<title>打工人小账本</title>
+<style>
+:root {
+  --bg: #FFF9F2;
+  --card: #FFFFFF;
+  --mint: #7EC8A4;
+  --mint-light: #D4F0E0;
+  --mint-dark: #5BA885;
+  --peach: #FFD4B2;
+  --peach-light: #FFE8D6;
+  --pink: #F08C94;
+  --pink-light: #FFE0E4;
+  --yellow: #FFE4A0;
+  --yellow-light: #FFF3CC;
+  --text: #4A4444;
+  --text-light: #8A8484;
+  --text-lighter: #B5AFAF;
+  --border: #F0E8E0;
+  --border-light: #F8F2EC;
+  --shadow: 0 2px 12px rgba(120,100,80,0.08);
+  --shadow-lg: 0 6px 24px rgba(120,100,80,0.1);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-xs: 8px;
+  --font: -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  --sidebar-w: 220px;
+  --header-h: 56px;
+  --bottom-nav-h: 64px;
+  --safe-bottom: env(safe-area-inset-bottom, 8px);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+@supports(-webkit-overflow-scrolling:touch){
+  html,body{position:fixed;width:100%;height:100%;overflow:hidden}
+}
+body{
+  font-family:var(--font);background:var(--bg);color:var(--text);
+  -webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;
+  user-select:none;-webkit-user-select:none;
+}
+button,input,select,textarea{font-family:inherit;font-size:16px;color:inherit}
+button{cursor:pointer;border:none;background:none;outline:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+input,select,textarea{outline:none;border:1px solid var(--border);border-radius:var(--radius-xs);padding:10px 14px;background:var(--card);transition:border .2s}
+input:focus,select:focus,textarea:focus{border-color:var(--mint);box-shadow:0 0 0 3px var(--mint-light)}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+/* Layout */
+.app{display:flex;height:100%}
+.sidebar{
+  width:var(--sidebar-w);background:var(--card);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;flex-shrink:0;z-index:10;
+  transition:transform .3s;
+}
+.sidebar-brand{padding:20px 18px 12px;display:flex;align-items:center;gap:10px}
+.sidebar-brand svg{flex-shrink:0}
+.sidebar-brand h1{font-size:17px;font-weight:700;color:var(--mint-dark);white-space:nowrap}
+.sidebar-nav{flex:1;padding:8px 12px;display:flex;flex-direction:column;gap:2px}
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:var(--radius-sm);
+  font-size:14px;color:var(--text-light);font-weight:500;transition:all .2s;
+  white-space:nowrap;
+}
+.nav-item:hover{background:var(--bg);color:var(--text)}
+.nav-item.active{background:var(--mint-light);color:var(--mint-dark);font-weight:600}
+.nav-item svg{flex-shrink:0;opacity:.7}
+.nav-item.active svg{opacity:1}
+.sidebar-footer{padding:12px 16px;border-top:1px solid var(--border-light);font-size:11px;color:var(--text-lighter)}
+
+.main{
+  flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;
+}
+.header{
+  height:var(--header-h);display:flex;align-items:center;padding:0 24px;
+  border-bottom:1px solid var(--border-light);flex-shrink:0;
+}
+.header-title{font-size:17px;font-weight:700;color:var(--text)}
+.content{
+  flex:1;overflow-y:auto;overflow-x:hidden;padding:20px 24px 24px;
+  -webkit-overflow-scrolling:touch;
+  padding-top:max(20px, env(safe-area-inset-top, 0px));
+}
+
+/* Bottom Nav (mobile) */
+.bottom-nav{
+  display:none;position:fixed;bottom:0;left:0;right:0;height:var(--bottom-nav-h);
+  background:var(--card);border-top:1px solid var(--border);
+  justify-content:space-around;align-items:center;z-index:20;
+  padding-bottom:var(--safe-bottom);
+}
+.bottom-nav .bn-item{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:6px 0;color:var(--text-light);font-size:10px;font-weight:500;
+  flex:1;min-width:0;transition:color .2s;
+}
+.bottom-nav .bn-item.active{color:var(--mint-dark)}
+.bottom-nav .bn-item svg{opacity:.6;width:22px;height:22px}
+.bottom-nav .bn-item.active svg{opacity:1}
+
+/* Pages */
+.page{display:none}
+.page.active{display:block;animation:fadeIn .3s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* Cards */
+.card{
+  background:var(--card);border-radius:var(--radius);padding:18px 20px;
+  box-shadow:var(--shadow);margin-bottom:16px;
+}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.card-title{font-size:15px;font-weight:700;color:var(--text)}
+.card-sub{font-size:12px;color:var(--text-light)}
+.section-title{font-size:16px;font-weight:700;margin:24px 0 12px;color:var(--text)}
+
+/* Stat Cards */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px}
+.stat-card{
+  background:var(--card);border-radius:var(--radius);padding:16px 18px;
+  box-shadow:var(--shadow);position:relative;overflow:hidden;
+}
+.stat-card .stat-icon{position:absolute;right:12px;top:12px;opacity:.15;width:40px;height:40px}
+.stat-card .stat-label{font-size:12px;color:var(--text-light);margin-bottom:6px}
+.stat-card .stat-value{font-size:22px;font-weight:700;color:var(--text)}
+.stat-card .stat-sub{font-size:11px;color:var(--text-lighter);margin-top:4px}
+.stat-card.accent-mint{border-left:3px solid var(--mint)}
+.stat-card.accent-pink{border-left:3px solid var(--pink)}
+.stat-card.accent-peach{border-left:3px solid var(--peach)}
+.stat-card.accent-yellow{border-left:3px solid var(--yellow)}
+
+/* Badge / Tag */
+.badge{
+  display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;
+  font-size:11px;font-weight:600;white-space:nowrap;
+}
+.badge.income{background:var(--mint-light);color:var(--mint-dark)}
+.badge.expense{background:var(--pink-light);color:var(--pink)}
+.badge.fixed{background:var(--yellow-light);color:#B8952E}
+.badge.demo{background:#F0E8FF;color:#7B5EA7;font-size:10px;margin-left:6px}
+
+/* Transaction List */
+.txn-list{display:flex;flex-direction:column;gap:8px}
+.txn-item{
+  display:flex;align-items:center;gap:12px;padding:14px 16px;
+  background:var(--card);border-radius:var(--radius-sm);box-shadow:var(--shadow);
+  cursor:pointer;transition:transform .15s;
+}
+.txn-item:active{transform:scale(.98)}
+.txn-icon{
+  width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0;
+}
+.txn-icon.income-i{background:var(--mint-light)}
+.txn-icon.expense-i{background:var(--pink-light)}
+.txn-info{flex:1;min-width:0}
+.txn-cat{font-size:14px;font-weight:600}
+.txn-note{font-size:12px;color:var(--text-light);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.txn-date{font-size:11px;color:var(--text-lighter)}
+.txn-amount{font-weight:700;font-size:16px;text-align:right;white-space:nowrap}
+.txn-amount.income-c{color:var(--mint-dark)}
+.txn-amount.expense-c{color:var(--pink)}
+.txn-time{font-size:10px;color:var(--text-lighter);text-align:right}
+
+/* Quick Record */
+.quick-form{display:flex;flex-direction:column;gap:12px}
+.quick-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.quick-row input,.quick-row select{flex:1;min-width:80px}
+.amount-input{font-size:20px;font-weight:700;text-align:center;width:100%}
+.type-toggle{display:flex;gap:0;border-radius:var(--radius-xs);overflow:hidden;border:2px solid var(--pink);transition:border-color .2s}
+.type-toggle.income-active{border-color:var(--mint)}
+.type-toggle button{
+  flex:1;padding:10px 16px;font-size:14px;font-weight:600;transition:all .2s;
+  color:var(--text-light);
+}
+.type-toggle button.active.income-btn{background:var(--mint);color:#fff}
+.type-toggle button.active.expense-btn{background:var(--pink);color:#fff}
+.cat-chips{display:flex;flex-wrap:wrap;gap:6px}
+.cat-chip{
+  padding:7px 14px;border-radius:20px;font-size:13px;font-weight:500;
+  background:var(--bg);color:var(--text-light);transition:all .2s;border:1.5px solid transparent;
+}
+.cat-chip:hover{background:var(--mint-light);color:var(--mint-dark)}
+.cat-chip.selected{border-color:var(--mint);background:var(--mint-light);color:var(--mint-dark);font-weight:600}
+.cat-chip.exp-chip.selected{border-color:var(--pink);background:var(--pink-light);color:var(--pink)}
+
+/* Quick Amount Presets */
+.quick-amounts{display:flex;flex-wrap:wrap;gap:6px}
+.quick-amt{padding:8px 18px;border-radius:20px;font-size:14px;font-weight:600;background:var(--bg);color:var(--text-light);transition:all .15s;border:1.5px solid transparent}
+.quick-amt:hover,.quick-amt:active{background:var(--mint-light);color:var(--mint-dark)}
+.quick-amt.selected{border-color:var(--mint);background:var(--mint-light);color:var(--mint-dark);font-weight:700}
+.record-counter{font-size:11px;color:var(--text-lighter);text-align:center;margin-top:4px}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:11px 22px;border-radius:var(--radius-xs);font-size:14px;font-weight:600;
+  transition:all .2s;white-space:nowrap;
+}
+.btn-primary{background:var(--mint);color:#fff;box-shadow:0 2px 8px rgba(126,200,164,.35)}
+.btn-primary:active{background:var(--mint-dark);transform:scale(.97)}
+.btn-outline{border:2px solid var(--mint);color:var(--mint-dark)}
+.btn-outline:active{background:var(--mint-light)}
+.btn-danger{background:var(--pink);color:#fff}
+.btn-danger:active{opacity:.85;transform:scale(.97)}
+.btn-sm{padding:7px 14px;font-size:12px;border-radius:6px}
+.btn-block{width:100%}
+.btn:disabled{opacity:.5;pointer-events:none}
+
+/* Formula */
+.formula-box{
+  background:var(--bg);border-radius:var(--radius-sm);padding:16px;margin:12px 0;
+  font-family:"SF Mono","Fira Code","Consolas",monospace;font-size:13px;line-height:1.8;
+  color:var(--text);overflow-x:auto;white-space:pre-wrap;
+}
+.formula-box .hl{color:var(--mint-dark);font-weight:600}
+
+/* Slider */
+.slider-group{margin:12px 0}
+.slider-label{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+.slider-label span:last-child{font-weight:700;color:var(--mint-dark)}
+input[type=range]{
+  -webkit-appearance:none;width:100%;height:6px;border-radius:3px;
+  background:var(--mint-light);outline:none;border:none;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:24px;height:24px;border-radius:50%;
+  background:var(--mint);cursor:pointer;box-shadow:0 2px 6px rgba(126,200,164,.35);
+}
+
+/* SVG Chart */
+.chart-container{width:100%;overflow-x:auto;padding:8px 0}
+.chart-container svg{display:block;min-width:300px}
+
+/* Piggy SVG */
+.piggy-wrap{text-align:center;padding:20px 0}
+.piggy-wrap svg{max-width:180px}
+
+/* Toast */
+.toast{
+  position:fixed;top:20px;left:50%;transform:translateX(-50%);
+  background:var(--text);color:#fff;padding:10px 24px;border-radius:24px;
+  font-size:13px;font-weight:600;z-index:100;pointer-events:none;
+  opacity:0;transition:opacity .3s;
+}
+.toast.show{opacity:1}
+
+/* Modal */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:50;
+  display:none;align-items:center;justify-content:center;padding:20px;
+}
+.modal-overlay.show{display:flex}
+.modal{
+  background:var(--card);border-radius:var(--radius);padding:24px;
+  width:100%;max-width:400px;max-height:80vh;overflow-y:auto;
+  box-shadow:var(--shadow-lg);animation:fadeIn .2s;
+}
+.modal h3{font-size:17px;margin-bottom:16px}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+
+/* Responsive */
+@media(max-width:768px){
+  .sidebar{display:none}
+  .header{display:none}
+  .content{padding:16px 16px calc(var(--bottom-nav-h) + var(--safe-bottom) + 16px);padding-top:max(16px, env(safe-area-inset-top, 0px))}
+  .bottom-nav{display:flex;padding-bottom:calc(var(--safe-bottom) + 2px)}
+  .stats-row{grid-template-columns:repeat(2,1fr)}
+  .page-title{font-size:18px;font-weight:700;margin-bottom:16px;color:var(--text);display:block}
+}
+
+@media(min-width:769px){
+  .page-title{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Sidebar (Desktop) -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <svg width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" fill="#FFD4B2"/><ellipse cx="12" cy="14" rx="3" ry="3.5" fill="#F08C94"/><ellipse cx="20" cy="14" rx="3" ry="3.5" fill="#F08C94"/><ellipse cx="13" cy="22" rx="2.5" ry="1.8" fill="#4A4444"/><ellipse cx="19" cy="22" rx="2.5" ry="1.8" fill="#4A4444"/><rect x="13" y="20" width="6" height="4" rx="2" fill="#F08C94"/><text x="16" y="30" text-anchor="middle" font-size="10" fill="#5BA885" font-weight="bold">🐷</text></svg>
+    <h1>打工人小账本</h1>
+  </div>
+  <nav class="sidebar-nav" id="sidebarNav">
+    <button class="nav-item active" data-page="home">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      首页
+    </button>
+    <button class="nav-item" data-page="record">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      记账
+    </button>
+    <button class="nav-item" data-page="wage">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      时薪计算
+    </button>
+    <button class="nav-item" data-page="savings">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h2v-4h-2z"/></svg>
+      存款目标
+    </button>
+    <button class="nav-item" data-page="sim">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+      情景模拟
+    </button>
+    <button class="nav-item" data-page="settings">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      设置
+    </button>
+  </nav>
+  <div class="sidebar-footer">💼 打工人的体面账本 · 离线版</div>
+</aside>
+
+<!-- Bottom Nav (Mobile) -->
+<nav class="bottom-nav" id="bottomNav">
+  <button class="bn-item active" data-page="home">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    首页
+  </button>
+  <button class="bn-item" data-page="record">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    记账
+  </button>
+  <button class="bn-item" data-page="wage">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    时薪
+  </button>
+  <button class="bn-item" data-page="savings">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h2v-4h-2z"/></svg>
+    存款
+  </button>
+  <button class="bn-item" data-page="sim">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/></svg>
+    模拟
+  </button>
+  <button class="bn-item" data-page="settings">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    设置
+  </button>
+</nav>
+
+<!-- Main Content -->
+<main class="main" id="mainContent">
+  <div class="header"><span class="header-title" id="headerTitle">首页</span></div>
+  <div class="content" id="contentArea">
+    <!-- Pages rendered by JS -->
+  </div>
+</main>
+
+<!-- Delete Confirm Modal -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal">
+    <h3>确认删除</h3>
+    <p id="confirmMsg">确定要删除这笔记录吗？此操作不可撤销。</p>
+    <div class="modal-actions">
+      <button class="btn btn-outline btn-sm" onclick="closeModal()">取消</button>
+      <button class="btn btn-danger btn-sm" id="confirmBtn">确认删除</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================
+   打工人小账本 - 核心逻辑
+   ============================================ */
+
+// --- Constants ---
+const STORAGE_KEY = 'worker_ledger_data';
+const CATS_INCOME = ['工资','奖金','副业','理财','红包','报销','其他收入'];
+const CATS_EXPENSE = ['餐饮','房租','交通','购物','通讯','水电','娱乐','学习','医疗','服饰','日用','其他支出'];
+const CATS_FIXED = ['房租','房贷','水电','通讯','交通卡','保险','物业'];
+const PAGE_TITLES = {home:'首页',record:'10秒记账',wage:'真实时薪',savings:'存款目标',sim:'情景模拟',settings:'设置'};
+
+// --- State ---
+let appData = {
+  transactions: [],
+  settings: { monthlySalary: 12000, payMonths: 13, yearlyWorkCost: 8000, dailyPresence: 9, commuteMin: 60, overtimeMonth: 10, workDaysYear: 250 },
+  goals: { freedomFund: 800000, safetyCushion: 60000 }
+};
+let currentPage = 'home';
+let confirmCallback = null;
+
+// --- Helpers ---
+function $(s){const el=document.querySelector(s);if(!el)console.warn('[Ledger] selector not found:',s);return el}
+function $$(s){return document.querySelectorAll(s)}
+function esc(s){if(!s)return'';const d=document.createElement('div');d.appendChild(document.createTextNode(s));return d.innerHTML}
+function fmt(n,d=0){const v=Number(n);return (isNaN(v)?0:v).toFixed(d)}
+function fmtMoney(n){const v=Number(n);return '¥'+(isNaN(v)?0:v).toLocaleString('zh-CN',{minimumFractionDigits:0,maximumFractionDigits:0})}
+function fmtShortMoney(n){
+  const v=Number(n);if(isNaN(v))return'¥0';
+  if(Math.abs(v)>=10000) return '¥'+(v/10000).toFixed(1)+'万';
+  return fmtMoney(v);
+}
+function today(){
+  const d=new Date();
+  if(isNaN(d.getTime())) return new Date().toISOString().slice(0,10);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function thisMonth(){
+  const d=new Date();
+  if(isNaN(d.getTime())) return new Date().toISOString().slice(0,7);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+}
+function isValidDateStr(s){
+  if(!s||typeof s!=='string')return false;
+  return /^\d{4}-\d{2}-\d{2}$/.test(s)&&!isNaN(new Date(s).getTime());
+}
+function clampDateStr(s){
+  if(isValidDateStr(s))return s;
+  return today();
+}
+function toast(msg){
+  const el=$('#toast');if(!el)return;
+  el.textContent=msg;el.classList.add('show');clearTimeout(el._t);
+  el._t=setTimeout(()=>el.classList.remove('show'),1800);
+}
+function uid(){
+  const t=Date.now().toString(36);
+  const r=Math.random().toString(36).slice(2,8);
+  return t+r;
+}
+
+// --- Storage ---
+const LS_MAX_SIZE = 5 * 1024 * 1024; // 5MB typical localStorage limit
+function saveData(){
+  const payload=JSON.stringify(compactStorage());
+  if(payload.length>LS_MAX_SIZE){
+    toast('⚠️ 数据过大，请清理旧记录');
+    console.warn('[Ledger] storage payload exceeds 5MB, save aborted');
+    return false;
+  }
+  try{localStorage.setItem(STORAGE_KEY,payload);return true}
+  catch(e){
+    if(e.name==='QuotaExceededError'||e.code===22){
+      toast('⚠️ 存储空间不足，请清理旧记录');
+      console.warn('[Ledger] localStorage quota exceeded');
+    }else{console.error('[Ledger] saveData error:',e)}
+    return false;
+  }
+}
+function loadData(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);
+    if(!raw){generateDemoData();saveData();return}
+    if(raw.length>LS_MAX_SIZE*2){console.warn('[Ledger] stored data unusually large, resetting');generateDemoData();saveData();return}
+    const d=JSON.parse(raw);
+    if(!d||typeof d!=='object'){generateDemoData();saveData();return}
+    if(d.v===STORAGE_VERSION&&Array.isArray(d.t)){expandStorage(d)}
+    else if(Array.isArray(d.transactions)){
+      appData.transactions=d.transactions.filter(tx=>tx&&typeof tx==='object'&&tx.id&&tx.date);
+      if(d.settings&&typeof d.settings==='object')appData.settings={...appData.settings,...d.settings};
+      if(d.goals&&typeof d.goals==='object')appData.goals={...appData.goals,...d.goals};
+      saveData();
+    }else{generateDemoData();saveData()}
+  }catch(e){console.error('[Ledger] loadData error:',e);generateDemoData();saveData()}
+}
+function resetData(){appData.transactions=[];appData.settings={monthlySalary:12000,payMonths:13,yearlyWorkCost:8000,dailyPresence:9,commuteMin:60,overtimeMonth:10,workDaysYear:250};appData.goals={freedomFund:800000,safetyCushion:60000};recSessionCount=0;saveData();renderAll();toast('数据已重置')}
+
+// --- Hourly Wage Calculator ---
+function calcHourlyWage(s){
+  const monthlySalary=Math.max(0,Number(s.monthlySalary)||0);
+  const payMonths=Math.max(1,Number(s.payMonths)||12);
+  const yearlyWorkCost=Math.max(0,Number(s.yearlyWorkCost)||0);
+  const workDaysYear=Math.max(1,Number(s.workDaysYear)||250);
+  const dailyPresence=Math.max(0,Number(s.dailyPresence)||0);
+  const commuteMin=Math.max(0,Number(s.commuteMin)||0);
+  const overtimeMonth=Math.max(0,Number(s.overtimeMonth)||0);
+
+  const yearMinutes = workDaysYear * (dailyPresence * 60 + commuteMin) + overtimeMonth * payMonths * 60;
+  const yearNet = monthlySalary * payMonths - yearlyWorkCost;
+  if(yearMinutes<=0) return {hourly:0,yearNet,yearMinutes:0,formula:'请设置工作时间和薪资参数'};
+  const hourly = Math.max(0,yearNet / (yearMinutes / 60));
+  const formula =
+`真实时薪 = 年度净收入 ÷ 年度总投入时间
+
+年度净收入 = 月薪 × 发薪月数 − 年度工作成本
+          = ${fmtMoney(monthlySalary)} × ${payMonths} − ${fmtMoney(yearlyWorkCost)}
+          = ${fmtMoney(yearNet)}
+
+年度总投入时间 = 年工作天数 × (每天在场小时 + 通勤小时) + 年加班小时
+              = ${workDaysYear} × (${dailyPresence}h + ${(commuteMin/60).toFixed(1)}h) + ${overtimeMonth * payMonths}h
+              = ${(yearMinutes/60).toFixed(0)} 小时
+
+真实时薪 = ${fmtMoney(yearNet)} ÷ ${(yearMinutes/60).toFixed(0)}h = ${fmtMoney(hourly,2)} / 小时`;
+  return {hourly,yearNet,yearMinutes,formula};
+}
+
+// --- Transactions Helpers ---
+function getMonthTxns(yearMonth){
+  return appData.transactions.filter(t=>t.date.startsWith(yearMonth));
+}
+function getRecentTxns(n=4){
+  return [...appData.transactions].sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id)).slice(0,n);
+}
+function txWorkMinutes(amount,s){
+  const hw=calcHourlyWage(s);
+  if(!hw||hw.hourly<=0) return 0;
+  return Math.round((Math.abs(Number(amount)||0)/hw.hourly)*60);
+}
+function addTxn(type,category,amount,note){
+  const s=appData.settings;
+  const safeType=(type==='income'||type==='expense')?type:'expense';
+  const safeAmt=Math.max(0,Math.abs(Number(amount)||0));
+  const wm = safeType==='expense' ? txWorkMinutes(safeAmt,s) : 0;
+  const txn={
+    id:uid(),
+    date:today(),
+    type:safeType,
+    category:String(category||'其他支出'),
+    amount:safeAmt,
+    note:String(note||''),
+    workMinutes:wm
+  };
+  appData.transactions.push(txn);
+  saveData();
+  return txn;
+}
+function deleteTxn(id){appData.transactions=appData.transactions.filter(t=>t.id!==id);saveData()}
+
+// --- Demo Data ---
+function generateDemoData(){
+  const now=new Date();const s=appData.settings;appData.transactions=[];
+  // salary for past 3 months (safe month math)
+  for(let m=1;m<=3;m++){
+    const d=new Date(now);
+    d.setMonth(d.getMonth()-m);
+    d.setDate(Math.min(d.getDate(),28));
+    d.setDate(10);
+    const ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const t={id:'demo-salary-'+m,date:ds,type:'income',category:'工资',amount:Number(s.monthlySalary)||12000,note:'月薪到账 [示例]',workMinutes:0};
+    appData.transactions.push(t);
+  }
+  // fixed expenses
+  const fixedItems=[
+    {cat:'房租',amt:2800,note:'合租主卧 [示例]'},
+    {cat:'水电',amt:180,note:'水电燃气 [示例]'},
+    {cat:'通讯',amt:89,note:'手机套餐 [示例]'},
+    {cat:'交通卡',amt:200,note:'地铁通勤 [示例]'},
+  ];
+  // flexible expenses (various days)
+  const flexItems=[
+    {cat:'餐饮',amt:35,note:'午餐外卖 [示例]'},
+    {cat:'餐饮',amt:28,note:'早餐咖啡 [示例]'},
+    {cat:'餐饮',amt:68,note:'周末聚餐 [示例]'},
+    {cat:'购物',amt:159,note:'日用品补货 [示例]'},
+    {cat:'购物',amt:299,note:'T恤 [示例]'},
+    {cat:'娱乐',amt:45,note:'视频会员 [示例]'},
+    {cat:'学习',amt:199,note:'在线课程 [示例]'},
+    {cat:'医疗',amt:86,note:'药店买药 [示例]'},
+    {cat:'餐饮',amt:42,note:'晚餐 [示例]'},
+    {cat:'交通',amt:15,note:'打车 [示例]'},
+  ];
+  // current month fixed
+  const cmY=now.getFullYear();const cmM=now.getMonth();const cmDay=now.getDate();
+  fixedItems.forEach((fi,i)=>{
+    const d=new Date(cmY,cmM,Math.min(5+i,28));
+    if(d>now){d.setDate(Math.max(1,cmDay-1))}
+    const ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    appData.transactions.push({id:'demo-fixed-'+i,date:ds,type:'expense',category:fi.cat,amount:fi.amt,note:fi.note,workMinutes:txWorkMinutes(fi.amt,s)});
+  });
+  flexItems.forEach((fi,i)=>{
+    const offset=Math.max(1,flexItems.length-i);
+    const d=new Date(cmY,cmM,Math.max(1,cmDay-offset));
+    if(d>now){d.setDate(Math.max(1,cmDay-1))}
+    const ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    appData.transactions.push({id:'demo-flex-'+i,date:ds,type:'expense',category:fi.cat,amount:fi.amt,note:fi.note,workMinutes:txWorkMinutes(fi.amt,s)});
+  });
+}
+
+// --- Render: Home ---
+function renderHome(){
+  const recent=getRecentTxns(4);
+  const ym=thisMonth();
+  const mt=getMonthTxns(ym);
+  const totalIncome=mt.filter(t=>t.type==='income').reduce((a,t)=>a+t.amount,0);
+  const totalFixed=mt.filter(t=>t.type==='expense'&&CATS_FIXED.includes(t.category)).reduce((a,t)=>a+t.amount,0);
+  const totalFlex=mt.filter(t=>t.type==='expense'&&!CATS_FIXED.includes(t.category)).reduce((a,t)=>a+t.amount,0);
+  const s=appData.settings;const hw=calcHourlyWage(s);
+
+  let html='<h1 class="page-title">🏠 首页</h1>';
+
+  // Summary cards
+  html+='<div class="stats-row">';
+  html+=`<div class="stat-card accent-mint"><div class="stat-label">本月收入</div><div class="stat-value">${fmtMoney(totalIncome)}</div></div>`;
+  html+=`<div class="stat-card accent-pink"><div class="stat-label">本月支出</div><div class="stat-value">${fmtMoney(totalFixed+totalFlex)}</div></div>`;
+  html+=`<div class="stat-card accent-yellow"><div class="stat-label">固定支出</div><div class="stat-value">${fmtMoney(totalFixed)}</div></div>`;
+  html+=`<div class="stat-card accent-peach"><div class="stat-label">弹性支出</div><div class="stat-value">${fmtMoney(totalFlex)}</div></div>`;
+  html+='</div>';
+
+  // Recent transactions
+  html+='<div class="card"><div class="card-header"><span class="card-title">📋 最近 4 笔</span><button class="btn btn-outline btn-sm" onclick="navigateTo(\'record\')">记一笔</button></div><div class="txn-list">';
+  if(recent.length===0) html+='<div style="text-align:center;padding:24px;color:var(--text-lighter)">还没有记录，去记一笔吧 ✍️</div>';
+  else recent.forEach(t=>{html+=renderTxnItem(t)});
+  html+='</div></div>';
+
+  // Monthly summary
+  html+='<div class="card"><div class="card-header"><span class="card-title">📊 本月小结</span><span class="card-sub">'+ym+'</span></div>';
+  html+=`<div style="display:flex;flex-direction:column;gap:8px;font-size:14px">`;
+  html+=`<div style="display:flex;justify-content:space-between"><span>💰 总收入</span><span style="color:var(--mint-dark);font-weight:600">${fmtMoney(totalIncome)}</span></div>`;
+  html+=`<div style="display:flex;justify-content:space-between"><span>📌 固定支出</span><span style="color:var(--pink)">-${fmtMoney(totalFixed)}</span></div>`;
+  html+=`<div style="display:flex;justify-content:space-between"><span>🎈 弹性支出</span><span style="color:var(--pink)">-${fmtMoney(totalFlex)}</span></div>`;
+  html+=`<div style="border-top:1px dashed var(--border);padding-top:8px;display:flex;justify-content:space-between;font-weight:700"><span>💎 本月结余</span><span style="color:${totalIncome-totalFixed-totalFlex>=0?'var(--mint-dark)':'var(--pink)'}">${fmtMoney(totalIncome-totalFixed-totalFlex)}</span></div>`;
+  html+=`</div></div>`;
+
+  // Hourly wage highlight
+  html+='<div class="card"><div class="card-header"><span class="card-title">⏱️ 你的时间价值</span></div>';
+  html+=`<div style="font-size:28px;font-weight:800;color:var(--mint-dark);text-align:center;padding:12px 0">${fmtMoney(hw.hourly,2)} <span style="font-size:14px;font-weight:500">/ 小时</span></div>`;
+  html+=`<div style="text-align:center;font-size:12px;color:var(--text-light)">每花 100 元 ≈ ${hw.hourly>0?fmt(100/hw.hourly,1):'--'} 小时工作时间</div>`;
+  html+='</div>';
+
+  $('#contentArea').innerHTML=html;
+}
+
+// --- Render: Transaction Item ---
+function renderTxnItem(t,demoMark=true){
+  if(!t||!t.id)return'';
+  const isIncome=t.type==='income';
+  const iconCls=isIncome?'income-i':'expense-i';
+  const amtCls=isIncome?'income-c':'expense-c';
+  const prefix=isIncome?'+':'-';
+  const iconSvg=isIncome
+    ?'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--mint-dark)" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>'
+    :'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--pink)" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>';
+  const demoBadge=(demoMark&&t.note&&t.note.includes('[示例]'))?'<span class="badge badge-demo demo">示例</span>':'';
+  const wmText=isIncome?'':(t.workMinutes>0?`<div class="txn-time">≈ ${t.workMinutes} 分钟工时</div>`:'');
+  const safeId=esc(t.id);
+  return `<div class="txn-item" data-id="${safeId}" onclick="confirmDeleteTxn('${safeId}')">
+    <div class="txn-icon ${iconCls}">${iconSvg}</div>
+    <div class="txn-info"><div class="txn-cat">${esc(t.category)}${demoBadge}</div><div class="txn-note">${esc(t.note||'')}</div><div class="txn-date">${esc(t.date)}</div></div>
+    <div style="text-align:right"><div class="txn-amount ${amtCls}">${prefix}${fmtMoney(t.amount)}</div>${wmText}</div>
+  </div>`;
+}
+
+// --- Storage (compact format v2) ---
+const STORAGE_VERSION = 2;
+function compactStorage(){
+  return {
+    v:STORAGE_VERSION,
+    t:appData.transactions.map(tx=>({i:tx.id,d:tx.date,p:tx.type[0],c:tx.category,a:tx.amount,n:tx.note||'',w:tx.workMinutes||0})),
+    s:appData.settings,
+    g:appData.goals
+  };
+}
+function expandStorage(c){
+  if(!c||!Array.isArray(c.t)){console.warn('[Ledger] expandStorage: invalid compact data');return}
+  appData.transactions=c.t.map(tx=>({
+    id:String(tx.i||''),
+    date:clampDateStr(tx.d),
+    type:tx.p==='i'?'income':'expense',
+    category:String(tx.c||'其他支出'),
+    amount:Math.max(0,Number(tx.a)||0),
+    note:String(tx.n||''),
+    workMinutes:Math.max(0,Number(tx.w)||0)
+  }));
+  if(c.s&&typeof c.s==='object')appData.settings={...appData.settings,...c.s};
+  if(c.g&&typeof c.g==='object')appData.goals={...appData.goals,...c.g};
+}
+function getStorageSize(){
+  const raw=localStorage.getItem(STORAGE_KEY);
+  if(!raw) return 0;
+  return new Blob([raw]).size;
+}
+function fmtStorage(bytes){
+  if(bytes<1024) return bytes+' B';
+  if(bytes<1048576) return (bytes/1024).toFixed(1)+' KB';
+  return (bytes/1048576).toFixed(2)+' MB';
+}
+
+// --- Render: Recording Page ---
+let recSessionCount=0;
+function renderRecord(){
+  let html='<h1 class="page-title">✍️ 闪电记账</h1>';
+  html+=`<div class="card">
+    <div class="quick-form" id="recordForm">
+      <div class="type-toggle" id="typeToggle">
+        <button class="active expense-btn" data-type="expense">💸 支出</button>
+        <button class="income-btn" data-type="income">💰 收入</button>
+      </div>
+      <div class="quick-amounts" id="quickAmts">
+        <button class="quick-amt" data-amt="20">¥20</button>
+        <button class="quick-amt" data-amt="35">¥35</button>
+        <button class="quick-amt" data-amt="50">¥50</button>
+        <button class="quick-amt" data-amt="100">¥100</button>
+        <button class="quick-amt" data-amt="200">¥200</button>
+        <button class="quick-amt" data-amt="500">¥500</button>
+        <button class="quick-amt" data-amt="0" style="font-weight:400">自填</button>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <span style="font-size:20px;font-weight:700;color:var(--text-light)">¥</span>
+        <input type="number" class="amount-input" id="recAmount" placeholder="0.00" step="0.01" min="0" inputmode="decimal" style="flex:1">
+      </div>
+      <div id="catChips" class="cat-chips"></div>
+      <input type="text" id="recNote" placeholder="备注（选填，回车即保存）" maxlength="50">
+      <button class="btn btn-primary btn-block" id="recSubmitBtn" style="padding:14px;font-size:16px">💾 保存</button>
+      <div class="record-counter" id="recCounter"></div>
+    </div>
+  </div>`;
+
+  // Recent records (last 15)
+  const recent=getRecentTxns(15);
+  html+='<div class="section-title">📝 最近记录</div><div class="txn-list">';
+  if(recent.length===0) html+='<div style="text-align:center;padding:24px;color:var(--text-lighter)">暂无记录</div>';
+  else recent.forEach(t=>{html+=renderTxnItem(t)});
+  html+='</div>';
+
+  $('#contentArea').innerHTML=html;
+
+  // Update counter
+  $('#recCounter').textContent=recSessionCount>0?`本会话已记 ${recSessionCount} 笔`:'⚡ 选金额 → 点分类 → 回车保存';
+
+  // Quick amount buttons
+  $('#quickAmts').addEventListener('click',function(e){
+    const btn=e.target.closest('.quick-amt');if(!btn)return;
+    const amt=parseInt(btn.dataset.amt);
+    this.querySelectorAll('.quick-amt').forEach(b=>b.classList.remove('selected'));
+    if(amt===0){$('#recAmount').value='';$('#recAmount').focus();return}
+    btn.classList.add('selected');
+    $('#recAmount').value=amt;
+    autoSubmitIfReady();
+    if(!$('#recAmount').value)return;
+    $('#recNote').focus();
+  });
+
+  // Type toggle logic
+  $('#typeToggle').addEventListener('click',function(e){
+    const btn=e.target.closest('button');if(!btn)return;
+    const type=btn.dataset.type;
+    this.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    this.classList.toggle('income-active',type==='income');
+    document.getElementById('catChips').dataset.type=type;
+    renderCatChips(type);
+  });
+  renderCatChips('expense');
+  document.getElementById('catChips').dataset.type='expense';
+  $('#typeToggle').classList.remove('income-active');
+
+  // Auto-select first category
+  setTimeout(()=>{
+    const firstChip=$('#catChips .cat-chip');
+    if(firstChip){firstChip.classList.add('selected')}
+  },50);
+
+  // Enter key submits
+  const form=$('#recordForm');
+  form.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();submitRecord()}});
+  $('#recSubmitBtn').addEventListener('click',function(e){e.preventDefault();submitRecord()});
+
+  // Auto-check if ready to submit (amount + category both set)
+  function autoSubmitIfReady(){
+    const amt=parseFloat($('#recAmount').value);
+    const cat=$('#catChips .cat-chip.selected');
+    if(!isNaN(amt)&&amt>0&&cat){submitRecord()}
+  }
+}
+
+function renderCatChips(type){
+  const cats=type==='income'?CATS_INCOME:CATS_EXPENSE;
+  const isExp=type==='expense';
+  let html=cats.map((c,i)=>`<button class="cat-chip${isExp?' exp-chip':''}${i===0?' selected':''}" data-cat="${c}">${c}</button>`).join('');
+  document.getElementById('catChips').innerHTML=html;
+}
+let recSubmitLock=false;
+function submitRecord(){
+  if(recSubmitLock)return;
+  recSubmitLock=true;
+  try{
+    const type=$('#catChips').dataset.type||'expense';
+    const amtEl=$('#recAmount');if(!amtEl){recSubmitLock=false;return}
+    const amount=parseFloat(amtEl.value);
+    const noteEl=$('#recNote');
+    const note=noteEl?noteEl.value.trim():'';
+    const selectedCat=$('#catChips .cat-chip.selected');
+    if(isNaN(amount)||amount<=0){toast('请输入金额');if(amtEl)amtEl.focus();recSubmitLock=false;return}
+    if(!selectedCat){toast('请选择分类');recSubmitLock=false;return}
+    const category=selectedCat.dataset.cat;
+    const txn=addTxn(type,category,amount,note);
+    if(amtEl)amtEl.value='';
+    if(noteEl)noteEl.value='';
+    const qa=$('#quickAmts');if(qa)qa.querySelectorAll('.quick-amt').forEach(b=>b.classList.remove('selected'));
+    recSessionCount++;
+    const counter=$('#recCounter');if(counter)counter.textContent=`本会话已记 ${recSessionCount} 笔`;
+    const wmText=txn.workMinutes>0?`≈ ${txn.workMinutes} 分钟工时`:'';
+    toast(`已存 ${category} ¥${amount} ${wmText}`);
+    // Lightweight refresh of recent list
+    const recent=getRecentTxns(15);
+    let listHtml='';
+    if(recent.length===0) listHtml='<div style="text-align:center;padding:24px;color:var(--text-lighter)">暂无记录</div>';
+    else recent.forEach(t=>{listHtml+=renderTxnItem(t)});
+    const txnList=$('#contentArea .txn-list');
+    if(txnList) txnList.innerHTML=listHtml;
+    // Re-select first category
+    setTimeout(()=>{
+      const fc=$('#catChips .cat-chip');if(fc)fc.classList.add('selected');
+      if(amtEl)amtEl.focus();
+    },50);
+  }finally{recSubmitLock=false}
+}
+// Cat chip clicks (delegated) + auto-submit on cat select if amount ready
+document.addEventListener('click',function(e){
+  const chip=e.target.closest('.cat-chip');
+  if(chip){
+    const container=chip.parentElement;
+    if(!container)return;
+    container.querySelectorAll('.cat-chip').forEach(c=>c.classList.remove('selected'));
+    chip.classList.add('selected');
+    // If amount is ready (from quick preset), auto-submit
+    const amtEl=$('#recAmount');
+    if(amtEl&&!recSubmitLock){
+      const amt=parseFloat(amtEl.value);
+      if(!isNaN(amt)&&amt>0){submitRecord()}
+    }
+  }
+});
+
+// --- Render: Wage Calculator ---
+function renderWage(){
+  const s=appData.settings;const hw=calcHourlyWage(s);
+  let html='<h1 class="page-title">⏱️ 真实时薪计算器</h1>';
+  html+=`<div class="card">
+    <div style="display:flex;align-items:center;justify-content:center;padding:16px 0">
+      <svg width="80" height="80" viewBox="0 0 80 80">
+        <circle cx="40" cy="40" r="38" fill="var(--mint-light)"/>
+        <circle cx="40" cy="40" r="30" fill="var(--mint)" opacity=".3"/>
+        <circle cx="40" cy="40" r="22" fill="var(--mint)"/>
+        <line x1="40" y1="40" x2="40" y2="22" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="40" y1="40" x2="52" y2="46" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="40" cy="40" r="3" fill="#fff"/>
+      </svg>
+    </div>
+    <div style="text-align:center;font-size:32px;font-weight:800;color:var(--mint-dark)">${fmtMoney(hw.hourly,2)}</div>
+    <div style="text-align:center;font-size:13px;color:var(--text-light);margin-bottom:16px">元 / 小时（真实时薪）</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div><label style="font-size:12px;color:var(--text-light)">月薪（到手）</label>
+        <input type="number" id="setSalary" value="${s.monthlySalary}" step="100" style="width:100%"></div>
+      <div><label style="font-size:12px;color:var(--text-light)">年发薪月数</label>
+        <input type="number" id="setPayMonths" value="${s.payMonths}" step="1" min="1" max="24" style="width:100%"></div>
+      <div><label style="font-size:12px;color:var(--text-light)">年工作成本（元）</label>
+        <input type="number" id="setWorkCost" value="${s.yearlyWorkCost}" step="100" style="width:100%"></div>
+      <div><label style="font-size:12px;color:var(--text-light)">年工作天数</label>
+        <input type="number" id="setWorkDays" value="${s.workDaysYear}" step="1" min="100" max="365" style="width:100%"></div>
+      <div><label style="font-size:12px;color:var(--text-light)">每日在场（小时）</label>
+        <input type="number" id="setPresence" value="${s.dailyPresence}" step="0.5" min="1" style="width:100%"></div>
+      <div><label style="font-size:12px;color:var(--text-light)">日通勤（分钟）</label>
+        <input type="number" id="setCommute" value="${s.commuteMin}" step="5" min="0" style="width:100%"></div>
+      <div><label style="font-size:12px;color:var(--text-light)">月均加班（小时）</label>
+        <input type="number" id="setOvertime" value="${s.overtimeMonth}" step="1" min="0" style="width:100%"></div>
+    </div>
+    <button class="btn btn-primary btn-block" onclick="updateSettings()" style="margin-top:14px">🔄 重新计算</button>
+  </div>`;
+
+  html+=`<div class="card"><div class="card-title" style="margin-bottom:12px">📐 展开公式</div>
+    <div class="formula-box">${hw.formula}</div>
+  </div>`;
+
+  html+=`<div class="card" style="background:var(--mint-light);border:none">
+    <div style="font-size:13px;color:var(--mint-dark);line-height:1.8">
+      💡 <b>真实时薪</b> = (年薪 − 工作成本) ÷ (工作 + 通勤 + 加班总时间)<br>
+      帮你揭示每笔消费背后真正的"时间成本"
+    </div>
+  </div>`;
+
+  $('#contentArea').innerHTML=html;
+}
+function updateSettings(){
+  const s=appData.settings;
+  s.monthlySalary=parseFloat($('#setSalary').value)||s.monthlySalary;
+  s.payMonths=parseInt($('#setPayMonths').value)||s.payMonths;
+  s.yearlyWorkCost=parseFloat($('#setWorkCost').value)||s.yearlyWorkCost;
+  s.workDaysYear=parseInt($('#setWorkDays').value)||s.workDaysYear;
+  s.dailyPresence=parseFloat($('#setPresence').value)||s.dailyPresence;
+  s.commuteMin=parseInt($('#setCommute').value)||s.commuteMin;
+  s.overtimeMonth=parseInt($('#setOvertime').value)||s.overtimeMonth;
+  saveData();
+  toast('已更新，刷新所有工时换算');
+  renderWage();
+}
+
+// --- Render: Savings ---
+function renderSavings(){
+  const s=appData.settings;const g=appData.goals;
+  const hw=calcHourlyWage(s);
+  const ym=thisMonth();const mt=getMonthTxns(ym);
+  const totalIncome=mt.filter(t=>t.type==='income').reduce((a,t)=>a+t.amount,0);
+  const totalExpense=mt.filter(t=>t.type==='expense').reduce((a,t)=>a+t.amount,0);
+  const monthlySave=totalIncome-totalExpense;
+
+  // Calculate total savings from all transactions
+  let runningTotal=0;
+  const sorted=[...appData.transactions].sort((a,b)=>a.date.localeCompare(b.date));
+  const monthlyData=[];
+  const monthMap=new Map();
+  sorted.forEach(t=>{
+    const m=t.date.slice(0,7);
+    if(!monthMap.has(m))monthMap.set(m,0);
+    monthMap.set(m,monthMap.get(m)+(t.type==='income'?t.amount:-t.amount));
+  });
+  const months=[...monthMap.keys()].sort();
+  months.forEach(m=>{runningTotal+=monthMap.get(m);monthlyData.push({month:m,balance:Math.max(0,runningTotal)})});
+
+  const projData=[...monthlyData];
+  if(monthlySave>0){
+    let lastBalance=projData.length>0?projData[projData.length-1].balance:0;
+    for(let i=1;i<=12;i++){
+      const d=new Date();d.setMonth(d.getMonth()+i);
+      const nm=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+      lastBalance+=monthlySave;
+      projData.push({month:nm,balance:lastBalance,projected:true});
+    }
+  }
+
+  let html='<h1 class="page-title">🐷 存款目标</h1>';
+
+  // Piggy Bank illustration
+  html+=renderPiggyBank();
+
+  // Goals
+  html+=`<div class="stats-row">
+    <div class="stat-card accent-mint"><div class="stat-label">🎯 自由基金目标</div><div class="stat-value">${fmtShortMoney(g.freedomFund)}</div><div class="stat-sub">年支出 × 25 (4%法则)</div></div>
+    <div class="stat-card accent-pink"><div class="stat-label">🛡️ 安全垫目标</div><div class="stat-value">${fmtShortMoney(g.safetyCushion)}</div><div class="stat-sub">月支出 × 6</div></div>
+  </div>`;
+
+  // Current deposit
+  const currentDeposit=monthlyData.length>0?monthlyData[monthlyData.length-1].balance:0;
+  html+=`<div class="card"><div class="card-header"><span class="card-title">💰 当前存款</span></div>
+    <div style="font-size:28px;font-weight:800;color:var(--text);text-align:center;padding:8px 0">${fmtMoney(currentDeposit)}</div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-light);margin-top:8px">
+      <span>自由基金进度: ${g.freedomFund>0?fmt(currentDeposit/g.freedomFund*100,1):0}%</span>
+      <span>安全垫进度: ${g.safetyCushion>0?fmt(currentDeposit/g.safetyCushion*100,1):0}%</span>
+    </div>
+    <div style="height:8px;background:var(--border-light);border-radius:4px;margin-top:8px;overflow:hidden;display:flex">
+      <div style="height:100%;background:var(--mint);border-radius:4px;width:${Math.min(100,g.freedomFund>0?currentDeposit/g.freedomFund*100:0)}%"></div>
+    </div>
+  </div>`;
+
+  // SVG Chart
+  html+=`<div class="card"><div class="card-header"><span class="card-title">📈 存款曲线</span><span class="card-sub">虚线为预测</span></div>`;
+  html+=renderDepositChart(monthlyData,projData,g.freedomFund,g.safetyCushion);
+  html+='</div>';
+
+  // Goal settings
+  html+=`<div class="card"><div class="card-title" style="margin-bottom:12px">⚙️ 调整目标</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div><label style="font-size:12px;color:var(--text-light)">自由基金（元）</label><input type="number" id="setFreedom" value="${g.freedomFund}" step="1000"></div>
+      <div><label style="font-size:12px;color:var(--text-light)">安全垫（元）</label><input type="number" id="setCushion" value="${g.safetyCushion}" step="1000"></div>
+    </div>
+    <button class="btn btn-primary btn-block" onclick="updateGoals()" style="margin-top:10px">💾 保存目标</button>
+  </div>`;
+
+  // Monthly savings projection
+  html+=`<div class="card" style="background:var(--mint-light);border:none">
+    <div style="font-size:13px;color:var(--mint-dark);line-height:1.8">
+      📊 本月预计结余: <b>${fmtMoney(monthlySave)}</b><br>
+      按此速度，达成自由基金约需 <b>${monthlySave>0?Math.ceil((g.freedomFund-currentDeposit)/monthlySave):'∞'}</b> 个月<br>
+      💡 <b>自由基金</b> = 年度生活支出 × 25（FIRE 4%法则）
+    </div>
+  </div>`;
+
+  $('#contentArea').innerHTML=html;
+}
+function updateGoals(){
+  const g=appData.goals;
+  g.freedomFund=parseFloat($('#setFreedom').value)||g.freedomFund;
+  g.safetyCushion=parseFloat($('#setCushion').value)||g.safetyCushion;
+  saveData();toast('目标已更新');renderSavings();
+}
+
+function renderDepositChart(actualData,projData,freedomGoal,safetyGoal){
+  const w=600,h=260,pad={top:20,right:20,bottom:40,left:60};
+  const allData=[...projData];
+  if(allData.length===0) return '<div style="text-align:center;padding:40px;color:var(--text-lighter)">暂无数据</div>';
+  const maxVal=Math.max(Number(freedomGoal)*1.1,...allData.map(d=>Number(d.balance)||0),1);
+  const minVal=0;
+  const xScale=allData.length<=1?0:(w-pad.left-pad.right)/(allData.length-1);
+  const yScale=(maxVal-minVal)<=0?0:(h-pad.top-pad.bottom)/(maxVal-minVal);
+
+  function x(i){return pad.left+i*xScale}
+  function y(v){return h-pad.bottom-(Number(v)-minVal)*yScale}
+
+  let svg=`<svg viewBox="0 0 ${w} ${h}" style="width:100%;max-width:600px;height:auto">`;
+
+  // Grid
+  for(let i=0;i<=4;i++){
+    const val=minVal+(maxVal-minVal)*i/4;
+    const yy=y(val);
+    svg+=`<line x1="${pad.left}" y1="${yy}" x2="${w-pad.right}" y2="${yy}" stroke="var(--border-light)" stroke-width="1" stroke-dasharray="4,4"/>`;
+    svg+=`<text x="${pad.left-8}" y="${yy+4}" text-anchor="end" font-size="10" fill="var(--text-lighter)">${fmtShortMoney(val)}</text>`;
+  }
+
+  // Freedom goal line
+  const fy=y(freedomGoal);
+  svg+=`<line x1="${pad.left}" y1="${fy}" x2="${w-pad.right}" y2="${fy}" stroke="var(--pink)" stroke-width="1.5" stroke-dasharray="6,3"/>`;
+  svg+=`<text x="${w-pad.right}" y="${fy-6}" text-anchor="end" font-size="10" fill="var(--pink)">自由基金 ${fmtShortMoney(freedomGoal)}</text>`;
+
+  // Safety line
+  if(safetyGoal>0){
+    const sy=y(safetyGoal);
+    svg+=`<line x1="${pad.left}" y1="${sy}" x2="${w-pad.right}" y2="${sy}" stroke="var(--peach)" stroke-width="1.5" stroke-dasharray="6,3"/>`;
+    svg+=`<text x="${w-pad.right}" y="${sy-6}" text-anchor="end" font-size="10" fill="var(--peach)">安全垫 ${fmtShortMoney(safetyGoal)}</text>`;
+  }
+
+  // Area fill
+  let areaPath='';
+  allData.forEach((d,i)=>{
+    if(i===0) areaPath+=`M${x(i)},${y(d.balance)}`;
+    else areaPath+=` L${x(i)},${y(d.balance)}`;
+  });
+  const lastX=x(allData.length-1);
+  areaPath+=` L${lastX},${y(0)} L${x(0)},${y(0)} Z`;
+  svg+=`<path d="${areaPath}" fill="var(--mint)" opacity="0.1"/>`;
+
+  // Actual line
+  let actualPath='';
+  if(actualData.length>0){
+    actualData.forEach((d,i)=>{
+      if(i===0) actualPath+=`M${x(i)},${y(d.balance)}`;
+      else actualPath+=` L${x(i)},${y(d.balance)}`;
+    });
+    svg+=`<path d="${actualPath}" fill="none" stroke="var(--mint)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+    actualData.forEach((d,i)=>{
+      svg+=`<circle cx="${x(i)}" cy="${y(d.balance)}" r="3.5" fill="var(--mint)"/>`;
+    });
+  }
+
+  // Projected line
+  const projectedOnly=projData.filter(d=>d.projected);
+  if(projectedOnly.length>0){
+    let projPath='';
+    // Start from last actual
+    if(actualData.length>0){
+      const lastA=actualData[actualData.length-1];
+      projPath+=`M${x(actualData.length-1)},${y(lastA.balance)}`;
+    }
+    projectedOnly.forEach((d,i)=>{
+      const idx=actualData.length+i;
+      projPath+=` L${x(idx)},${y(d.balance)}`;
+    });
+    svg+=`<path d="${projPath}" fill="none" stroke="var(--mint)" stroke-width="2" stroke-dasharray="6,4" opacity=".5"/>`;
+    projectedOnly.forEach((d,i)=>{
+      const idx=actualData.length+i;
+      svg+=`<circle cx="${x(idx)}" cy="${y(d.balance)}" r="2.5" fill="var(--mint)" opacity=".5"/>`;
+    });
+  }
+
+  // X labels
+  const labelStep=Math.max(1,Math.floor(allData.length/8));
+  allData.forEach((d,i)=>{
+    if(i%labelStep===0||i===allData.length-1){
+      svg+=`<text x="${x(i)}" y="${h-pad.bottom+16}" text-anchor="middle" font-size="10" fill="var(--text-lighter)">${d.month.slice(2)}月</text>`;
+    }
+  });
+
+  svg+='</svg>';
+  return `<div class="chart-container">${svg}</div>`;
+}
+
+function renderPiggyBank(){
+  return `<div class="piggy-wrap">
+    <svg viewBox="0 0 200 160" width="140" height="112">
+      <!-- Body -->
+      <ellipse cx="100" cy="90" rx="70" ry="50" fill="var(--peach)"/>
+      <ellipse cx="100" cy="88" rx="62" ry="43" fill="var(--peach-light)"/>
+      <!-- Ears -->
+      <ellipse cx="60" cy="45" rx="15" ry="12" fill="var(--pink)" transform="rotate(-20,60,45)"/>
+      <ellipse cx="60" cy="45" rx="10" ry="8" fill="var(--pink-light)" transform="rotate(-20,60,45)"/>
+      <ellipse cx="135" cy="45" rx="15" ry="12" fill="var(--pink)" transform="rotate(20,135,45)"/>
+      <ellipse cx="135" cy="45" rx="10" ry="8" fill="var(--pink-light)" transform="rotate(20,135,45)"/>
+      <!-- Eyes -->
+      <circle cx="75" cy="80" r="6" fill="var(--text)"/>
+      <circle cx="77" cy="78" r="2" fill="#fff"/>
+      <circle cx="115" cy="80" r="6" fill="var(--text)"/>
+      <circle cx="117" cy="78" r="2" fill="#fff"/>
+      <!-- Snout -->
+      <ellipse cx="95" cy="95" rx="18" ry="13" fill="var(--pink)"/>
+      <circle cx="89" cy="94" r="3" fill="var(--text)" opacity=".4"/>
+      <circle cx="101" cy="94" r="3" fill="var(--text)" opacity=".4"/>
+      <!-- Smile -->
+      <path d="M85,100 Q95,110 105,100" fill="none" stroke="var(--text)" stroke-width="1.5" stroke-linecap="round" opacity=".5"/>
+      <!-- Coin slot -->
+      <rect x="90" y="50" width="15" height="4" rx="2" fill="var(--text)" opacity=".3"/>
+      <!-- Blush -->
+      <circle cx="68" cy="92" r="8" fill="var(--pink)" opacity=".25"/>
+      <circle cx="125" cy="92" r="8" fill="var(--pink)" opacity=".25"/>
+      <!-- Legs -->
+      <rect x="60" y="125" width="16" height="18" rx="6" fill="var(--pink)"/>
+      <rect x="120" y="125" width="16" height="18" rx="6" fill="var(--pink)"/>
+      <!-- Coin -->
+      <circle cx="50" cy="30" r="10" fill="var(--yellow)" stroke="var(--peach)" stroke-width="1.5"/>
+      <text x="50" y="34" text-anchor="middle" font-size="9" fill="var(--text)" font-weight="700">¥</text>
+      <!-- Sparkles -->
+      <text x="38" y="22" font-size="10" fill="var(--yellow)">✦</text>
+      <text x="62" y="18" font-size="8" fill="var(--yellow)">✦</text>
+    </svg>
+  </div>`;
+}
+
+// --- Render: Simulation ---
+function renderSim(){
+  const s=appData.settings;
+  const hw=calcHourlyWage(s);
+  const base=hw.hourly;
+  let html='<h1 class="page-title">🎛️ 情景模拟</h1>';
+
+  // Commute simulation — only commute changes
+  html+=`<div class="card"><div class="card-title" style="margin-bottom:12px">🚇 通勤时间影响</div>
+    <p style="font-size:12px;color:var(--text-light);margin-bottom:12px">仅改变通勤，其他参数保持基准。</p>
+    <div class="slider-group">
+      <div class="slider-label"><span>日通勤时间</span><span id="simCommuteVal">${s.commuteMin} 分钟</span></div>
+      <input type="range" id="simCommute" min="0" max="180" value="${s.commuteMin}" step="5">
+    </div>
+    <div style="text-align:center;font-size:22px;font-weight:700;color:var(--mint-dark)" id="simCommuteResult">${fmtMoney(base,2)} 元/小时</div>
+    <div style="text-align:center;font-size:12px" id="simCommuteDiff"></div>
+  </div>`;
+
+  // Overtime simulation — only overtime changes
+  html+=`<div class="card"><div class="card-title" style="margin-bottom:12px">🌙 加班影响</div>
+    <p style="font-size:12px;color:var(--text-light);margin-bottom:12px">仅改变加班，其他参数保持基准。</p>
+    <div class="slider-group">
+      <div class="slider-label"><span>月均加班</span><span id="simOTVal">${s.overtimeMonth} 小时</span></div>
+      <input type="range" id="simOT" min="0" max="80" value="${s.overtimeMonth}" step="1">
+    </div>
+    <div style="text-align:center;font-size:22px;font-weight:700;color:var(--mint-dark)" id="simOTResult">${fmtMoney(base,2)} 元/小时</div>
+    <div style="text-align:center;font-size:12px" id="simOTDiff"></div>
+  </div>`;
+
+  // Salary change simulation — only salary changes
+  html+=`<div class="card"><div class="card-title" style="margin-bottom:12px">📈 涨薪 / 降薪模拟</div>
+    <p style="font-size:12px;color:var(--text-light);margin-bottom:12px">仅改变月薪，其他参数保持基准。</p>
+    <div class="slider-group">
+      <div class="slider-label"><span>月薪变动</span><span id="simSalaryVal">${fmtMoney(s.monthlySalary)}</span></div>
+      <input type="range" id="simSalary" min="3000" max="50000" value="${s.monthlySalary}" step="500">
+    </div>
+    <div style="text-align:center;font-size:22px;font-weight:700;color:var(--mint-dark)" id="simSalaryResult">${fmtMoney(base,2)} 元/小时</div>
+    <div style="text-align:center;font-size:12px" id="simSalaryDiff"></div>
+  </div>`;
+
+  // Combined insight
+  html+=`<div class="card" style="background:var(--mint-light);border:none">
+    <div style="font-size:13px;color:var(--mint-dark);line-height:1.8">
+      💡 <b>当前基准时薪: ${fmtMoney(base,2)} 元/小时</b><br>
+      每笔消费的时间成本 = 金额 ÷ 时薪<br>
+      你花的不是钱，是时间。
+    </div>
+  </div>`;
+
+  $('#contentArea').innerHTML=html;
+
+  function updateSim(){
+    const tempC={...appData.settings};tempC.commuteMin=parseInt($('#simCommute').value)||0;
+    const tempO={...appData.settings};tempO.overtimeMonth=parseInt($('#simOT').value)||0;
+    const tempS={...appData.settings};tempS.monthlySalary=parseInt($('#simSalary').value)||0;
+
+    $('#simCommuteVal').textContent=tempC.commuteMin+' 分钟';
+    $('#simOTVal').textContent=tempO.overtimeMonth+' 小时';
+    $('#simSalaryVal').textContent=fmtMoney(tempS.monthlySalary);
+
+    const hwC=calcHourlyWage(tempC),hwO=calcHourlyWage(tempO),hwS=calcHourlyWage(tempS);
+    $('#simCommuteResult').textContent=fmtMoney(hwC.hourly,2)+' 元/小时';
+    $('#simOTResult').textContent=fmtMoney(hwO.hourly,2)+' 元/小时';
+    $('#simSalaryResult').textContent=fmtMoney(hwS.hourly,2)+' 元/小时';
+
+    function diffHTML(h,ref){
+      const d=h-ref;const pct=ref>0?(d/ref*100):0;
+      const cls=d>=0?'var(--mint-dark)':'var(--pink)';
+      const sign=d>=0?'+':'';
+      return `<span style="color:${cls};font-weight:600">${sign}${fmtMoney(d,2)} (${sign}${pct.toFixed(1)}%)</span>`;
+    }
+    $('#simCommuteDiff').innerHTML='相比基准: '+diffHTML(hwC.hourly,base);
+    $('#simOTDiff').innerHTML='相比基准: '+diffHTML(hwO.hourly,base);
+    $('#simSalaryDiff').innerHTML='相比基准: '+diffHTML(hwS.hourly,base);
+  }
+
+  ['simCommute','simOT','simSalary'].forEach(id=>{
+    const el=$('#'+id);if(el)el.addEventListener('input',updateSim);
+  });
+  updateSim();
+}
+
+// --- Render: Settings ---
+function renderSettings(){
+  const s=appData.settings;
+  let html='<h1 class="page-title">⚙️ 设置</h1>';
+
+  const storageSize=getStorageSize();
+  const txnCount=appData.transactions.length;
+  // Data management
+  html+=`<div class="card"><div class="card-title" style="margin-bottom:12px">💾 数据管理</div>
+    <div style="margin-bottom:12px;padding:8px 12px;background:var(--bg);border-radius:var(--radius-xs);font-size:12px;color:var(--text-light);display:flex;justify-content:space-between">
+      <span>📦 本地存储: ${fmtStorage(storageSize)} · ${txnCount} 笔记录</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button class="btn btn-outline btn-block" onclick="exportData()">📤 导出数据 (JSON)</button>
+      <button class="btn btn-outline btn-block" onclick="document.getElementById('importFile').click()">📥 导入数据 (JSON)</button>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+      <button class="btn btn-outline btn-block" onclick="confirmCleanOld()">🧹 清理旧记录 (保留近6个月)</button>
+      <button class="btn btn-danger btn-block" onclick="confirmReset()">🗑️ 清除全部并加载示例</button>
+    </div>
+  </div>`;
+
+  // About
+  html+=`<div class="card"><div class="card-title" style="margin-bottom:12px">ℹ️ 关于</div>
+    <div style="font-size:13px;color:var(--text-light);line-height:1.8">
+      🐷 <b>打工人小账本</b> · 离线版<br>
+      纯前端单文件，数据保存在浏览器本地<br>
+      不依赖任何后端、CDN 或在线服务<br>
+      由zzh工作室 生成 · ${new Date().getFullYear()}
+    </div>
+  </div>`;
+
+  $('#contentArea').innerHTML=html;
+}
+
+function exportData(){
+  const blob=new Blob([JSON.stringify({transactions:appData.transactions,settings:appData.settings,goals:appData.goals},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='打工人小账本_备份_'+today()+'.json';a.click();
+  URL.revokeObjectURL(a.href);toast('数据已导出');
+}
+function importData(e){
+  const file=e.target.files[0];if(!file){e.target.value='';return}
+  if(file.size>10*1024*1024){toast('文件过大（>10MB），请检查');e.target.value='';return}
+  const reader=new FileReader();
+  reader.onerror=function(){toast('文件读取失败');e.target.value=''}
+  reader.onload=function(ev){
+    try{
+      const text=ev.target.result;
+      if(!text||text.length<2){throw new Error('空文件')}
+      const d=JSON.parse(text);
+      if(!d||typeof d!=='object'){throw new Error('格式不正确')}
+      // Accept both compact (v2) and expanded formats
+      if(d.v===STORAGE_VERSION&&Array.isArray(d.t)){expandStorage(d)}
+      else if(Array.isArray(d.transactions)){
+        appData.transactions=d.transactions.filter(tx=>tx&&typeof tx==='object'&&tx.id&&tx.date);
+        if(d.settings&&typeof d.settings==='object')appData.settings={...appData.settings,...d.settings};
+        if(d.goals&&typeof d.goals==='object')appData.goals={...appData.goals,...d.goals};
+      }else{throw new Error('格式不正确')}
+      saveData();renderAll();toast('数据已导入');
+    }catch(ex){toast('导入失败：'+ex.message)}
+    e.target.value='';
+  };
+  reader.readAsText(file);
+}
+
+// --- Modal ---
+function confirmDeleteTxn(id){
+  const txn=appData.transactions.find(t=>t.id===id);
+  if(!txn)return;
+  $('#confirmMsg').textContent=`确定要删除「${txn.category} ${fmtMoney(txn.amount)}」这条记录吗？`;
+  $('#confirmModal').classList.add('show');
+  confirmCallback=()=>{deleteTxn(id);renderAll();closeModal();toast('已删除')};
+  $('#confirmBtn').onclick=()=>{if(confirmCallback)confirmCallback()};
+}
+function closeModal(){$('#confirmModal').classList.remove('show');confirmCallback=null}
+function confirmReset(){
+  $('#confirmMsg').textContent='确定要清除所有数据并加载示例数据吗？';
+  $('#confirmModal').classList.add('show');
+  confirmCallback=()=>{recSessionCount=0;generateDemoData();saveData();renderAll();closeModal();toast('已重置为示例数据')};
+  $('#confirmBtn').onclick=()=>{if(confirmCallback)confirmCallback()};
+}
+function confirmCleanOld(){
+  const cutoff=new Date();cutoff.setMonth(cutoff.getMonth()-6);
+  const cutoffStr=cutoff.getFullYear()+'-'+String(cutoff.getMonth()+1).padStart(2,'0')+'-01';
+  const oldCount=appData.transactions.filter(t=>t.date<cutoffStr).length;
+  if(oldCount===0){toast('没有超过6个月的旧记录');return}
+  $('#confirmMsg').textContent=`将删除 ${oldCount} 笔超过6个月的旧记录，保留近期数据。确定继续？`;
+  $('#confirmModal').classList.add('show');
+  confirmCallback=()=>{appData.transactions=appData.transactions.filter(t=>t.date>=cutoffStr);saveData();renderAll();closeModal();toast(`已清理 ${oldCount} 笔旧记录`)};
+  $('#confirmBtn').onclick=()=>{if(confirmCallback)confirmCallback()};
+}
+$('#confirmModal').addEventListener('click',function(e){if(e.target===this)closeModal()});
+
+// --- Navigation ---
+function navigateTo(page){
+  try{
+    currentPage=page;
+    const hTitle=$('#headerTitle');if(hTitle)hTitle.textContent=PAGE_TITLES[page]||'';
+    $$('.nav-item').forEach(el=>el.classList.toggle('active',el.dataset.page===page));
+    $$('.bn-item').forEach(el=>el.classList.toggle('active',el.dataset.page===page));
+    renderAll();
+  }catch(e){console.error('[Ledger] navigateTo error:',e);toast('页面切换异常，请刷新')}
+}
+
+function renderAll(){
+  try{
+    switch(currentPage){
+      case 'home': renderHome();break;
+      case 'record': renderRecord();break;
+      case 'wage': renderWage();break;
+      case 'savings': renderSavings();break;
+      case 'sim': renderSim();break;
+      case 'settings': renderSettings();break;
+    }
+  }catch(e){
+    console.error('[Ledger] renderAll error for page',currentPage,':',e);
+    const ca=$('#contentArea');if(ca)ca.innerHTML='<div style="text-align:center;padding:60px 20px;color:var(--text-lighter)"><p style="font-size:48px;margin-bottom:16px">😵</p><p>页面加载异常</p><p style="font-size:12px;margin-top:8px">请尝试刷新页面或清除数据</p><button class="btn btn-outline btn-sm" style="margin-top:16px" onclick="navigateTo(\'settings\')">前往设置</button></div>';
+  }
+  const a=$('#contentArea');if(a){const ex=a.querySelector('.zzh-copy');if(!ex)a.innerHTML+='<div style="text-align:center;font-size:11px;color:var(--text-lighter);padding:12px 0 4px" class="zzh-copy">zzh工作室 · 2026</div>'}
+}
+
+// --- Navigation Events ---
+document.addEventListener('click',function(e){
+  const navItem=e.target.closest('.nav-item')||e.target.closest('.bn-item');
+  if(navItem){navigateTo(navItem.dataset.page)}
+});
+
+// --- Keyboard support ---
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape')closeModal();
+});
+
+// --- Init ---
+loadData();
+navigateTo('home');
+</script>
+</body>
+</html>

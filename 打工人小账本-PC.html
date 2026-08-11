@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>打工人小账本 · PC 版</title>
+<style>
+:root {
+  --bg: #F5F3EF;
+  --card: #FFFFFF;
+  --mint: #63B890;
+  --mint-light: #D4EDE2;
+  --mint-dark: #4A9E70;
+  --peach: #F0C9A8;
+  --peach-light: #FAE8D8;
+  --pink: #E87A82;
+  --pink-light: #FDE0E4;
+  --yellow: #F5D878;
+  --yellow-light: #FDF4CC;
+  --text: #3A3634;
+  --text-light: #7A7674;
+  --text-lighter: #B0ACAA;
+  --border: #E8E4E0;
+  --border-light: #F4F2EE;
+  --shadow: 0 1px 4px rgba(0,0,0,0.06);
+  --shadow-lg: 0 4px 16px rgba(0,0,0,0.08);
+  --radius: 14px;
+  --radius-sm: 10px;
+  --radius-xs: 7px;
+  --font: -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;
+  --sidebar-w: 240px;
+  --header-h: 60px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--font);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;user-select:none}
+button,input,select,textarea{font-family:inherit;font-size:14px;color:inherit}
+button{cursor:pointer;border:none;background:none;outline:none}
+input,select,textarea{outline:none;border:1px solid var(--border);border-radius:var(--radius-xs);padding:8px 12px;background:var(--card);transition:border .2s}
+input:focus,select:focus,textarea:focus{border-color:var(--mint);box-shadow:0 0 0 3px var(--mint-light)}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+.app{display:flex;height:100%}
+.sidebar{
+  width:var(--sidebar-w);background:var(--card);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;flex-shrink:0;z-index:10;
+}
+.sidebar-brand{padding:18px 20px 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border-light)}
+.sidebar-brand h1{font-size:16px;font-weight:700;color:var(--mint-dark);white-space:nowrap}
+.sidebar-nav{flex:1;padding:10px 12px;display:flex;flex-direction:column;gap:3px}
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--radius-sm);
+  font-size:14px;color:var(--text-light);font-weight:500;transition:all .15s;white-space:nowrap;
+}
+.nav-item:hover{background:var(--bg);color:var(--text)}
+.nav-item.active{background:var(--mint-light);color:var(--mint-dark);font-weight:600}
+.nav-item svg{flex-shrink:0;opacity:.7}
+.nav-item.active svg{opacity:1}
+.nav-item .shortcut{font-size:11px;opacity:.5;margin-left:auto}
+.sidebar-footer{padding:14px 16px;border-top:1px solid var(--border-light);font-size:11px;color:var(--text-lighter);display:flex;flex-direction:column;gap:4px}
+.sidebar-footer .kv{display:flex;justify-content:space-between}
+.sidebar-footer .kv span:last-child{color:var(--text-light)}
+
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.header{
+  height:var(--header-h);display:flex;align-items:center;padding:0 28px;
+  border-bottom:1px solid var(--border-light);flex-shrink:0;background:var(--card);
+}
+.header-title{font-size:16px;font-weight:700;color:var(--text)}
+.content{
+  flex:1;overflow-y:auto;overflow-x:hidden;padding:24px 28px 28px;
+  max-width:900px;
+}
+
+/* Cards */
+.card{
+  background:var(--card);border-radius:var(--radius);padding:20px 24px;
+  box-shadow:var(--shadow);margin-bottom:14px;
+}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.card-title{font-size:15px;font-weight:700;color:var(--text)}
+.card-sub{font-size:12px;color:var(--text-light)}
+.section-title{font-size:15px;font-weight:700;margin:20px 0 12px;color:var(--text)}
+
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.stat-card{
+  background:var(--card);border-radius:var(--radius);padding:14px 16px;
+  box-shadow:var(--shadow);position:relative;
+}
+.stat-card .stat-label{font-size:11px;color:var(--text-light);margin-bottom:4px}
+.stat-card .stat-value{font-size:20px;font-weight:700;color:var(--text)}
+.stat-card.accent-mint{border-left:3px solid var(--mint)}
+.stat-card.accent-pink{border-left:3px solid var(--pink)}
+.stat-card.accent-peach{border-left:3px solid var(--peach)}
+.stat-card.accent-yellow{border-left:3px solid var(--yellow)}
+
+.badge{
+  display:inline-flex;align-items:center;padding:2px 8px;border-radius:12px;
+  font-size:10px;font-weight:600;white-space:nowrap;
+}
+.badge.income{background:var(--mint-light);color:var(--mint-dark)}
+.badge.expense{background:var(--pink-light);color:var(--pink)}
+.badge.demo{background:#F0E8FF;color:#7B5EA7;font-size:10px;margin-left:6px}
+
+/* Transaction */
+.txn-list{display:flex;flex-direction:column;gap:6px}
+.txn-item{
+  display:flex;align-items:center;gap:12px;padding:12px 16px;
+  background:var(--bg);border-radius:var(--radius-sm);cursor:pointer;transition:all .12s;
+}
+.txn-item:hover{background:var(--mint-light);transform:translateX(2px)}
+.txn-item:active{transform:scale(.99)}
+.txn-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.txn-icon.income-i{background:var(--mint-light)}
+.txn-icon.expense-i{background:var(--pink-light)}
+.txn-info{flex:1;min-width:0}
+.txn-cat{font-size:13px;font-weight:600}
+.txn-note{font-size:12px;color:var(--text-light);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.txn-date{font-size:11px;color:var(--text-lighter)}
+.txn-amount{font-weight:700;font-size:15px;text-align:right;white-space:nowrap}
+.txn-amount.income-c{color:var(--mint-dark)}
+.txn-amount.expense-c{color:var(--pink)}
+.txn-time{font-size:10px;color:var(--text-lighter);text-align:right}
+.txn-del{opacity:0;font-size:18px;padding:4px 8px;color:var(--pink);transition:opacity .15s;border-radius:4px}
+.txn-item:hover .txn-del{opacity:.7}
+.txn-del:hover{opacity:1!important;background:var(--pink-light)}
+
+/* Quick Record */
+.quick-form{display:flex;flex-direction:column;gap:10px;max-width:500px}
+.quick-amounts{display:flex;flex-wrap:wrap;gap:6px}
+.quick-amt{padding:7px 16px;border-radius:16px;font-size:13px;font-weight:600;background:var(--bg);color:var(--text-light);transition:all .12s;border:1.5px solid transparent}
+.quick-amt:hover{background:var(--mint-light);color:var(--mint-dark);border-color:var(--mint)}
+.quick-amt.selected{border-color:var(--mint);background:var(--mint-light);color:var(--mint-dark)}
+.amount-input{font-size:22px;font-weight:700;text-align:center}
+.type-toggle{display:flex;border-radius:var(--radius-xs);overflow:hidden;border:2px solid var(--pink);transition:border-color .2s}
+.type-toggle.income-active{border-color:var(--mint)}
+.type-toggle button{flex:1;padding:8px 16px;font-size:13px;font-weight:600;transition:all .15s;color:var(--text-light)}
+.type-toggle button.active.income-btn{background:var(--mint);color:#fff}
+.type-toggle button.active.expense-btn{background:var(--pink);color:#fff}
+.cat-chips{display:flex;flex-wrap:wrap;gap:6px}
+.cat-chip{padding:6px 14px;border-radius:16px;font-size:12px;font-weight:500;background:var(--bg);color:var(--text-light);transition:all .12s;border:1.5px solid transparent}
+.cat-chip:hover{background:var(--mint-light);color:var(--mint-dark);border-color:var(--mint)}
+.cat-chip.selected{border-color:var(--mint);background:var(--mint-light);color:var(--mint-dark);font-weight:600}
+.cat-chip.exp-chip.selected{border-color:var(--pink);background:var(--pink-light);color:var(--pink)}
+.record-counter{font-size:11px;color:var(--text-lighter);text-align:center;margin-top:2px}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:9px 20px;border-radius:var(--radius-xs);font-size:13px;font-weight:600;transition:all .12s;white-space:nowrap;
+}
+.btn-primary{background:var(--mint);color:#fff;box-shadow:0 2px 6px rgba(99,184,144,.3)}
+.btn-primary:hover{background:var(--mint-dark)}
+.btn-primary:active{transform:scale(.97)}
+.btn-outline{border:1.5px solid var(--mint);color:var(--mint-dark)}
+.btn-outline:hover{background:var(--mint-light)}
+.btn-danger{background:var(--pink);color:#fff}
+.btn-danger:hover{opacity:.9}
+.btn-sm{padding:6px 12px;font-size:11px;border-radius:5px}
+.btn-block{width:100%}
+
+/* Sync */
+.sync-code{
+  background:var(--bg);border:1px dashed var(--mint);border-radius:var(--radius-sm);
+  padding:12px 16px;font-family:"SF Mono","Consolas",monospace;font-size:11px;
+  word-break:break-all;max-height:120px;overflow-y:auto;user-select:all;
+  -webkit-user-select:all;margin-bottom:8px;line-height:1.6
+}
+.sync-status{padding:6px 12px;border-radius:10px;font-size:12px;display:inline-flex;align-items:center;gap:6px}
+.sync-status.ok{background:var(--mint-light);color:var(--mint-dark)}
+.sync-status.warn{background:var(--yellow-light);color:#8A7200}
+.sync-status.err{background:var(--pink-light);color:var(--pink)}
+
+.formula-box{
+  background:var(--bg);border-radius:var(--radius-sm);padding:16px;margin:10px 0;
+  font-family:"SF Mono","Consolas",monospace;font-size:12px;line-height:1.9;white-space:pre-wrap;
+}
+
+.slider-group{margin:10px 0}
+.slider-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
+.slider-label span:last-child{font-weight:700;color:var(--mint-dark)}
+input[type=range]{-webkit-appearance:none;width:100%;height:5px;border-radius:3px;background:var(--mint-light);outline:none;border:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--mint);cursor:pointer;box-shadow:0 2px 4px rgba(99,184,144,.3)}
+input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--mint);cursor:pointer;border:none}
+
+.chart-container{width:100%;overflow-x:auto;padding:8px 0}
+.chart-container svg{display:block;min-width:300px}
+.piggy-wrap{text-align:center;padding:12px 0}
+.piggy-wrap svg{max-width:140px}
+
+.toast{
+  position:fixed;top:20px;left:50%;transform:translateX(-50%);
+  background:var(--text);color:#fff;padding:8px 20px;border-radius:20px;
+  font-size:12px;font-weight:600;z-index:100;pointer-events:none;
+  opacity:0;transition:opacity .25s;
+}
+.toast.show{opacity:1}
+
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:50;
+  display:none;align-items:center;justify-content:center;padding:20px;
+}
+.modal-overlay.show{display:flex}
+.modal{
+  background:var(--card);border-radius:var(--radius);padding:28px;
+  width:100%;max-width:380px;box-shadow:var(--shadow-lg);animation:modalIn .2s;
+}
+@keyframes modalIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.modal h3{font-size:16px;margin-bottom:12px}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <svg width="28" height="28" viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" fill="#F0C9A8"/><ellipse cx="12" cy="14" rx="3" ry="3.5" fill="#E87A82"/><ellipse cx="20" cy="14" rx="3" ry="3.5" fill="#E87A82"/><text x="16" y="28" text-anchor="middle" font-size="11">🐷</text></svg>
+    <h1>打工人小账本</h1>
+  </div>
+  <nav class="sidebar-nav" id="sidebarNav">
+    <button class="nav-item active" data-page="home"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>首页<span class="shortcut">Alt+1</span></button>
+    <button class="nav-item" data-page="record"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>记账<span class="shortcut">Alt+2</span></button>
+    <button class="nav-item" data-page="wage"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>时薪<span class="shortcut">Alt+3</span></button>
+    <button class="nav-item" data-page="savings"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h2v-4h-2z"/></svg>存款<span class="shortcut">Alt+4</span></button>
+    <button class="nav-item" data-page="sim"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/></svg>模拟<span class="shortcut">Alt+5</span></button>
+    <button class="nav-item" data-page="sync"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>同步<span class="shortcut">Alt+6</span></button>
+    <button class="nav-item" data-page="settings"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>设置<span class="shortcut">Alt+7</span></button>
+  </nav>
+  <div class="sidebar-footer" id="sidebarInfo">
+    <div class="kv"><span>💼 zzh工作室 · 2026</span><span id="sbStorage"></span></div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="header"><span class="header-title" id="headerTitle">首页</span></div>
+  <div class="content" id="contentArea"></div>
+</main>
+
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal">
+    <h3>确认操作</h3>
+    <p id="confirmMsg"></p>
+    <div class="modal-actions">
+      <button class="btn btn-outline btn-sm" onclick="closeModal()">取消</button>
+      <button class="btn btn-danger btn-sm" id="confirmBtn">确认</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY='worker_ledger_pc';
+const CATS_INCOME=['工资','奖金','副业','理财','红包','报销','其他收入'];
+const CATS_EXPENSE=['餐饮','房租','交通','购物','通讯','水电','娱乐','学习','医疗','服饰','日用','其他支出'];
+const CATS_FIXED=['房租','房贷','水电','通讯','交通卡','保险','物业'];
+const PAGE_TITLES={home:'首页',record:'闪电记账',wage:'真实时薪',savings:'存款目标',sim:'情景模拟',sync:'设备同步',settings:'设置'};
+const STORAGE_VERSION=2;
+const LS_MAX_SIZE=5*1024*1024;
+
+let appData={transactions:[],settings:{monthlySalary:12000,payMonths:13,yearlyWorkCost:8000,dailyPresence:9,commuteMin:60,overtimeMonth:10,workDaysYear:250},goals:{freedomFund:800000,safetyCushion:60000}};
+let currentPage='home',confirmCallback=null,recSessionCount=0,recSubmitLock=false;
+let syncFileHandle=null,syncFileName='';
+
+function $(s){const el=document.querySelector(s);if(!el)console.warn('[$] not found:',s);return el}
+function $$(s){return document.querySelectorAll(s)}
+function esc(s){if(!s)return'';const d=document.createElement('div');d.appendChild(document.createTextNode(s));return d.innerHTML}
+function fmt(n,d=0){const v=Number(n);return(isNaN(v)?0:v).toFixed(d)}
+function fmtMoney(n){const v=Number(n);return'¥'+(isNaN(v)?0:v).toLocaleString('zh-CN',{maximumFractionDigits:0})}
+function fmtShortMoney(n){const v=Number(n);if(isNaN(v))return'¥0';if(Math.abs(v)>=10000)return'¥'+(v/10000).toFixed(1)+'万';return fmtMoney(v)}
+function today(){const d=new Date();if(isNaN(d.getTime()))return new Date().toISOString().slice(0,10);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function thisMonth(){const d=new Date();if(isNaN(d.getTime()))return new Date().toISOString().slice(0,7);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
+function isValidDateStr(s){return!(!s||typeof s!=='string')&&/^\d{4}-\d{2}-\d{2}$/.test(s)&&!isNaN(new Date(s).getTime())}
+function clampDateStr(s){return isValidDateStr(s)?s:today()}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
+function toast(msg){const el=$('#toast');if(!el)return;el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2000)}
+
+function calcHourlyWage(s){
+  const ms=Math.max(0,Number(s.monthlySalary)||0),pm=Math.max(1,Number(s.payMonths)||12);
+  const wc=Math.max(0,Number(s.yearlyWorkCost)||0),wd=Math.max(1,Number(s.workDaysYear)||250);
+  const dp=Math.max(0,Number(s.dailyPresence)||0),cm=Math.max(0,Number(s.commuteMin)||0);
+  const om=Math.max(0,Number(s.overtimeMonth)||0);
+  const ym=wd*(dp*60+cm)+om*pm*60,yn=ms*pm-wc;
+  if(ym<=0)return{hourly:0,yearNet:yn,yearMinutes:0,formula:'请设置工作时间和薪资参数'};
+  const h=Math.max(0,yn/(ym/60));
+  return{hourly:h,yearNet:yn,yearMinutes:ym,formula:`真实时薪 = 年度净收入 ÷ 年度总投入时间\n\n年度净收入 = 月薪 × 发薪月数 − 年工作成本 = ${fmtMoney(ms)} × ${pm} − ${fmtMoney(wc)} = ${fmtMoney(yn)}\n\n年度总投入时间 = ${wd}×(${dp}h+${(cm/60).toFixed(1)}h) + ${om*pm}h = ${(ym/60).toFixed(0)}h\n\n真实时薪 = ${fmtMoney(yn)} ÷ ${(ym/60).toFixed(0)}h = ${fmtMoney(h,2)} / 小时`};
+}
+
+function getMonthTxns(ym){return appData.transactions.filter(t=>t.date.startsWith(ym))}
+function getRecentTxns(n=4){return[...appData.transactions].sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id)).slice(0,n)}
+function txWorkMinutes(amount,s){const hw=calcHourlyWage(s);if(!hw||hw.hourly<=0)return 0;return Math.round((Math.abs(Number(amount)||0)/hw.hourly)*60)}
+function addTxn(type,category,amount,note){
+  const s=appData.settings,safeType=(type==='income'||type==='expense')?type:'expense';
+  const safeAmt=Math.max(0,Math.abs(Number(amount)||0)),wm=safeType==='expense'?txWorkMinutes(safeAmt,s):0;
+  const txn={id:uid(),date:today(),type:safeType,category:String(category||'其他支出'),amount:safeAmt,note:String(note||''),workMinutes:wm};
+  appData.transactions.push(txn);saveData();return txn;
+}
+function deleteTxn(id){appData.transactions=appData.transactions.filter(t=>t.id!==id);saveData()}
+
+function compactStorage(){return{v:STORAGE_VERSION,t:appData.transactions.map(tx=>({i:tx.id,d:tx.date,p:tx.type[0],c:tx.category,a:tx.amount,n:tx.note||'',w:tx.workMinutes||0})),s:appData.settings,g:appData.goals}}
+function expandStorage(c){
+  if(!c||!Array.isArray(c.t))return;
+  appData.transactions=c.t.map(tx=>({id:String(tx.i||''),date:clampDateStr(tx.d),type:tx.p==='i'?'income':'expense',category:String(tx.c||'其他支出'),amount:Math.max(0,Number(tx.a)||0),note:String(tx.n||''),workMinutes:Math.max(0,Number(tx.w)||0)}));
+  if(c.s&&typeof c.s==='object')appData.settings={...appData.settings,...c.s};
+  if(c.g&&typeof c.g==='object')appData.goals={...appData.goals,...c.g};
+}
+function getStorageSize(){const raw=localStorage.getItem(STORAGE_KEY);return raw?new Blob([raw]).size:0}
+function fmtStorage(bytes){if(bytes<1024)return bytes+' B';if(bytes<1048576)return(bytes/1024).toFixed(1)+' KB';return(bytes/1048576).toFixed(2)+' MB'}
+
+function saveData(){
+  const payload=JSON.stringify(compactStorage());
+  if(payload.length>LS_MAX_SIZE){toast('⚠️ 数据过大，请清理旧记录');return false}
+  try{localStorage.setItem(STORAGE_KEY,payload)}catch(e){toast('⚠️ 存储空间不足');return false}
+  writeSyncFile();return true;
+}
+function loadData(){
+  try{const raw=localStorage.getItem(STORAGE_KEY);if(!raw){generateDemoData();saveData();return}
+    const d=JSON.parse(raw);if(!d||typeof d!=='object'){generateDemoData();saveData();return}
+    if(d.v===STORAGE_VERSION&&Array.isArray(d.t))expandStorage(d);
+    else if(Array.isArray(d.transactions)){appData.transactions=d.transactions.filter(tx=>tx&&tx.id&&tx.date);if(d.settings)appData.settings={...appData.settings,...d.settings};if(d.goals)appData.goals={...appData.goals,...d.goals};saveData()}
+    else{generateDemoData();saveData()}
+  }catch(e){generateDemoData();saveData()}
+  updateSidebarInfo();
+}
+
+function updateSidebarInfo(){const sz=getStorageSize();const el=$('#sbStorage');if(el)el.textContent=fmtStorage(sz)+' · '+appData.transactions.length+'笔'}
+
+function generateDemoData(){
+  const now=new Date(),s=appData.settings;appData.transactions=[];
+  for(let m=1;m<=3;m++){const d=new Date(now);d.setMonth(d.getMonth()-m);d.setDate(10);const ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');appData.transactions.push({id:'demo-salary-'+m,date:ds,type:'income',category:'工资',amount:Number(s.monthlySalary)||12000,note:'月薪到账 [示例]',workMinutes:0})}
+  const fi=[{cat:'房租',amt:2800,note:'合租 [示例]'},{cat:'水电',amt:180,note:'水电 [示例]'},{cat:'通讯',amt:89,note:'话费 [示例]'},{cat:'交通卡',amt:200,note:'通勤 [示例]'}];
+  const fl=[{cat:'餐饮',amt:35,note:'外卖 [示例]'},{cat:'餐饮',amt:28,note:'咖啡 [示例]'},{cat:'餐饮',amt:68,note:'聚餐 [示例]'},{cat:'购物',amt:159,note:'日用品 [示例]'},{cat:'购物',amt:299,note:'T恤 [示例]'},{cat:'娱乐',amt:45,note:'会员 [示例]'},{cat:'学习',amt:199,note:'课程 [示例]'},{cat:'医疗',amt:86,note:'买药 [示例]'},{cat:'餐饮',amt:42,note:'晚餐 [示例]'},{cat:'交通',amt:15,note:'打车 [示例]'}];
+  const cmY=now.getFullYear(),cmM=now.getMonth(),cmDay=now.getDate();
+  fi.forEach((f,i)=>{const d=new Date(cmY,cmM,Math.min(5+i,28));if(d>now)d.setDate(Math.max(1,cmDay-1));const ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');appData.transactions.push({id:'demo-fixed-'+i,date:ds,type:'expense',category:f.cat,amount:f.amt,note:f.note,workMinutes:txWorkMinutes(f.amt,s)})});
+  fl.forEach((f,i)=>{const offset=Math.max(1,fl.length-i),d=new Date(cmY,cmM,Math.max(1,cmDay-offset));if(d>now)d.setDate(Math.max(1,cmDay-1));const ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');appData.transactions.push({id:'demo-flex-'+i,date:ds,type:'expense',category:f.cat,amount:f.amt,note:f.note,workMinutes:txWorkMinutes(f.amt,s)})});
+}
+
+function renderTxnItem(t,demoMark=true){
+  if(!t||!t.id)return'';
+  const isInc=t.type==='income',prefix=isInc?'+':'-';
+  const iconSvg=isInc?'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--mint-dark)" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>':'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--pink)" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>';
+  const demoBadge=(demoMark&&t.note&&t.note.includes('[示例]'))?'<span class="badge demo">示例</span>':'';
+  const wmText=isInc?'':(t.workMinutes>0?`<div class="txn-time">≈ ${t.workMinutes}分工时</div>`:'');
+  const safeId=esc(t.id);
+  return`<div class="txn-item" data-id="${safeId}">
+    <div class="txn-icon ${isInc?'income-i':'expense-i'}">${iconSvg}</div>
+    <div class="txn-info"><div class="txn-cat">${esc(t.category)}${demoBadge}</div><div class="txn-note">${esc(t.note||'')}</div><div class="txn-date">${esc(t.date)}</div></div>
+    <div style="text-align:right"><div class="txn-amount ${isInc?'income-c':'expense-c'}">${prefix}${fmtMoney(t.amount)}</div>${wmText}</div>
+    <button class="txn-del" title="删除" onclick="event.stopPropagation();confirmDeleteTxn('${safeId}')">×</button>
+  </div>`;
+}
+
+function renderHome(){
+  const recent=getRecentTxns(4),ym=thisMonth(),mt=getMonthTxns(ym);
+  const ti=mt.filter(t=>t.type==='income').reduce((a,t)=>a+t.amount,0);
+  const tf=mt.filter(t=>t.type==='expense'&&CATS_FIXED.includes(t.category)).reduce((a,t)=>a+t.amount,0);
+  const tfl=mt.filter(t=>t.type==='expense'&&!CATS_FIXED.includes(t.category)).reduce((a,t)=>a+t.amount,0);
+  const hw=calcHourlyWage(appData.settings);
+  let h='<div class="stats-row">';
+  h+=`<div class="stat-card accent-mint"><div class="stat-label">本月收入</div><div class="stat-value">${fmtMoney(ti)}</div></div>`;
+  h+=`<div class="stat-card accent-pink"><div class="stat-label">本月支出</div><div class="stat-value">${fmtMoney(tf+tfl)}</div></div>`;
+  h+=`<div class="stat-card accent-yellow"><div class="stat-label">固定支出</div><div class="stat-value">${fmtMoney(tf)}</div></div>`;
+  h+=`<div class="stat-card accent-peach"><div class="stat-label">弹性支出</div><div class="stat-value">${fmtMoney(tfl)}</div></div></div>`;
+  h+='<div class="card"><div class="card-header"><span class="card-title">📋 最近 4 笔</span><button class="btn btn-outline btn-sm" onclick="navigateTo(\'record\')">记一笔</button></div><div class="txn-list">';
+  if(recent.length===0)h+='<div style="text-align:center;padding:24px;color:var(--text-lighter)">还没有记录，去记一笔吧 ✍️</div>';
+  else recent.forEach(t=>{h+=renderTxnItem(t)});h+='</div></div>';
+  h+=`<div class="card"><div class="card-header"><span class="card-title">📊 本月小结</span><span class="card-sub">${ym}</span></div>`;
+  h+=`<div style="display:flex;flex-direction:column;gap:6px;font-size:13px"><div style="display:flex;justify-content:space-between"><span>💰 总收入</span><span style="color:var(--mint-dark);font-weight:600">${fmtMoney(ti)}</span></div><div style="display:flex;justify-content:space-between"><span>📌 固定支出</span><span style="color:var(--pink)">-${fmtMoney(tf)}</span></div><div style="display:flex;justify-content:space-between"><span>🎈 弹性支出</span><span style="color:var(--pink)">-${fmtMoney(tfl)}</span></div><div style="border-top:1px dashed var(--border);padding-top:6px;display:flex;justify-content:space-between;font-weight:700"><span>💎 本月结余</span><span style="color:${ti-tf-tfl>=0?'var(--mint-dark)':'var(--pink)'}">${fmtMoney(ti-tf-tfl)}</span></div></div></div>`;
+  h+=`<div class="card"><div class="card-header"><span class="card-title">⏱️ 你的时间价值</span></div><div style="font-size:26px;font-weight:800;color:var(--mint-dark);text-align:center;padding:8px 0">${fmtMoney(hw.hourly,2)}<span style="font-size:14px;font-weight:500"> / 小时</span></div><div style="text-align:center;font-size:12px;color:var(--text-light)">每花 100 元 ≈ ${hw.hourly>0?fmt(100/hw.hourly,1):'--'} 小时工作时间</div></div>`;
+  $('#contentArea').innerHTML=h;
+}
+
+function renderRecord(){
+  let h=`<div class="card"><div class="quick-form" id="recordForm">
+    <div class="type-toggle" id="typeToggle"><button class="active expense-btn" data-type="expense">💸 支出</button><button class="income-btn" data-type="income">💰 收入</button></div>
+    <div class="quick-amounts" id="quickAmts"><button class="quick-amt" data-amt="20">¥20</button><button class="quick-amt" data-amt="35">¥35</button><button class="quick-amt" data-amt="50">¥50</button><button class="quick-amt" data-amt="100">¥100</button><button class="quick-amt" data-amt="200">¥200</button><button class="quick-amt" data-amt="500">¥500</button><button class="quick-amt" data-amt="0">自填</button></div>
+    <div style="display:flex;gap:10px;align-items:center"><span style="font-size:18px;font-weight:700;color:var(--text-light)">¥</span><input type="number" class="amount-input" id="recAmount" placeholder="0.00" step="0.01" min="0" inputmode="decimal" style="flex:1"></div>
+    <div id="catChips" class="cat-chips"></div>
+    <input type="text" id="recNote" placeholder="备注（选填，回车即保存）" maxlength="50">
+    <div style="display:flex;gap:8px"><button class="btn btn-primary" id="recSubmitBtn" style="flex:1;padding:12px;font-size:14px">💾 保存 (Enter)</button></div>
+    <div class="record-counter" id="recCounter"></div></div></div>`;
+  const recent=getRecentTxns(20);
+  h+='<div class="section-title">📝 最近记录</div><div class="txn-list">';
+  if(recent.length===0)h+='<div style="text-align:center;padding:24px;color:var(--text-lighter)">暂无记录</div>';
+  else recent.forEach(t=>{h+=renderTxnItem(t)});h+='</div>';
+  $('#contentArea').innerHTML=h;
+  $('#recCounter').textContent=recSessionCount>0?`本次打开已记 ${recSessionCount} 笔`:'⚡ 点击快捷金额 → 选择分类 → 回车保存';
+  $('#quickAmts').addEventListener('click',function(e){const b=e.target.closest('.quick-amt');if(!b)return;const a=parseInt(b.dataset.amt);this.querySelectorAll('.quick-amt').forEach(x=>x.classList.remove('selected'));if(a===0){$('#recAmount').value='';$('#recAmount').focus();return}b.classList.add('selected');$('#recAmount').value=a;autoSubmitIfReady()});
+  $('#typeToggle').addEventListener('click',function(e){const b=e.target.closest('button');if(!b)return;const t=b.dataset.type;this.querySelectorAll('button').forEach(x=>x.classList.remove('active'));b.classList.add('active');this.classList.toggle('income-active',t==='income');const cc=document.getElementById('catChips');cc.dataset.type=t;renderCatChips(t)});
+  renderCatChips('expense');document.getElementById('catChips').dataset.type='expense';$('#typeToggle').classList.remove('income-active');
+  setTimeout(()=>{const fc=$('#catChips .cat-chip');if(fc)fc.classList.add('selected');$('#recAmount').focus()},50);
+  const form=$('#recordForm');form.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();submitRecord()}});
+  $('#recSubmitBtn').addEventListener('click',function(e){e.preventDefault();submitRecord()});
+  function autoSubmitIfReady(){const a=parseFloat($('#recAmount').value);const c=$('#catChips .cat-chip.selected');if(!isNaN(a)&&a>0&&c)submitRecord()}
+}
+function renderCatChips(type){const cats=type==='income'?CATS_INCOME:CATS_EXPENSE,isExp=type==='expense';document.getElementById('catChips').innerHTML=cats.map((c,i)=>`<button class="cat-chip${isExp?' exp-chip':''}${i===0?' selected':''}" data-cat="${c}">${c}</button>`).join('')}
+function submitRecord(){
+  if(recSubmitLock)return;recSubmitLock=true;
+  try{const t=$('#catChips').dataset.type||'expense';const ae=$('#recAmount');if(!ae){recSubmitLock=false;return}const a=parseFloat(ae.value);const ne=$('#recNote');const n=ne?ne.value.trim():'';const sc=$('#catChips .cat-chip.selected');if(isNaN(a)||a<=0){toast('请输入金额');if(ae)ae.focus();recSubmitLock=false;return}if(!sc){toast('请选择分类');recSubmitLock=false;return}
+    const txn=addTxn(t,sc.dataset.cat,a,n);if(ae)ae.value='';if(ne)ne.value='';const qa=$('#quickAmts');if(qa)qa.querySelectorAll('.quick-amt').forEach(b=>b.classList.remove('selected'));
+    recSessionCount++;const cnt=$('#recCounter');if(cnt)cnt.textContent=`本次打开已记 ${recSessionCount} 笔`;
+    toast(`已存 ${txn.category} ¥${a} ${txn.workMinutes>0?'≈'+txn.workMinutes+'分工时':''}`);
+    const recent=getRecentTxns(20);let lh='';if(recent.length===0)lh='<div style="text-align:center;padding:24px;color:var(--text-lighter)">暂无记录</div>';else recent.forEach(tx=>{lh+=renderTxnItem(tx)});const tl=$('#contentArea .txn-list');if(tl)tl.innerHTML=lh;
+    updateSidebarInfo();setTimeout(()=>{const fc=$('#catChips .cat-chip');if(fc)fc.classList.add('selected');if(ae)ae.focus()},50);
+  }finally{recSubmitLock=false}
+}
+document.addEventListener('click',function(e){const chip=e.target.closest('.cat-chip');if(chip){const c=chip.parentElement;if(!c)return;c.querySelectorAll('.cat-chip').forEach(x=>x.classList.remove('selected'));chip.classList.add('selected');const ae=$('#recAmount');if(ae&&!recSubmitLock){const a=parseFloat(ae.value);if(!isNaN(a)&&a>0)submitRecord()}}});
+
+function renderWage(){
+  const s=appData.settings,hw=calcHourlyWage(s);
+  let h=`<div class="card"><div style="text-align:center;font-size:30px;font-weight:800;color:var(--mint-dark);padding:12px 0">${fmtMoney(hw.hourly,2)}<span style="font-size:14px;font-weight:500"> 元/小时</span></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">`;
+  ['月薪','发薪月数','年成本','年工作天','在场时','通勤分','月加班时'].forEach((l,i)=>{const ks=['monthlySalary','payMonths','yearlyWorkCost','workDaysYear','dailyPresence','commuteMin','overtimeMonth'];h+=`<div><label style="font-size:11px;color:var(--text-light)">${l}</label><input type="number" id="set${ks[i]}" value="${s[ks[i]]}" style="width:100%"></div>`});
+  h+=`</div><button class="btn btn-primary btn-block" onclick="updateSettings()" style="margin-top:10px">🔄 重新计算</button></div>`;
+  h+=`<div class="card"><div class="card-title" style="margin-bottom:10px">📐 展开公式</div><div class="formula-box">${hw.formula}</div></div>`;
+  h+=`<div class="card" style="background:var(--mint-light);border:none"><div style="font-size:12px;color:var(--mint-dark);line-height:1.8">💡 <b>真实时薪</b> = (年薪 − 工作成本) ÷ (工作 + 通勤 + 加班总时间)</div></div>`;
+  $('#contentArea').innerHTML=h;
+}
+function updateSettings(){const s=appData.settings;['monthlySalary','payMonths','yearlyWorkCost','workDaysYear','dailyPresence','commuteMin','overtimeMonth'].forEach(k=>{const el=$('#set'+k);if(el)s[k]=parseFloat(el.value)||s[k]});saveData();toast('已更新');renderWage()}
+
+function renderSavings(){
+  const s=appData.settings,g=appData.goals,ym=thisMonth(),mt=getMonthTxns(ym);
+  const ti=mt.filter(t=>t.type==='income').reduce((a,t)=>a+t.amount,0),te=mt.filter(t=>t.type==='expense').reduce((a,t)=>a+t.amount,0),ms=ti-te;
+  let rt=0;const sorted=[...appData.transactions].sort((a,b)=>a.date.localeCompare(b.date)),md=[],mm=new Map();
+  sorted.forEach(t=>{const m=t.date.slice(0,7);mm.set(m,(mm.get(m)||0)+(t.type==='income'?t.amount:-t.amount))});
+  [...mm.keys()].sort().forEach(m=>{rt+=mm.get(m);md.push({month:m,balance:Math.max(0,rt)})});
+  const pd=[...md];if(ms>0){let lb=pd.length>0?pd[pd.length-1].balance:0;for(let i=1;i<=12;i++){const d=new Date();d.setMonth(d.getMonth()+i);lb+=ms;pd.push({month:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),balance:lb,projected:true})}}
+  let h='<h1 class="page-title" style="display:none">🐷 存款目标</h1>';
+  h+=renderPiggyBank();
+  h+=`<div class="stats-row"><div class="stat-card accent-mint"><div class="stat-label">🎯 自由基金</div><div class="stat-value">${fmtShortMoney(g.freedomFund)}</div></div><div class="stat-card accent-pink"><div class="stat-label">🛡️ 安全垫</div><div class="stat-value">${fmtShortMoney(g.safetyCushion)}</div></div></div>`;
+  const cd=md.length>0?md[md.length-1].balance:0;
+  h+=`<div class="card"><div class="card-header"><span class="card-title">💰 当前存款</span></div><div style="font-size:26px;font-weight:800;text-align:center">${fmtMoney(cd)}</div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-light);margin-top:6px"><span>自由: ${g.freedomFund>0?fmt(cd/g.freedomFund*100,1):0}%</span><span>安全: ${g.safetyCushion>0?fmt(cd/g.safetyCushion*100,1):0}%</span></div><div style="height:6px;background:var(--border-light);border-radius:3px;margin-top:6px;overflow:hidden"><div style="height:100%;background:var(--mint);border-radius:3px;width:${Math.min(100,g.freedomFund>0?cd/g.freedomFund*100:0)}%"></div></div></div>`;
+  h+=`<div class="card"><div class="card-header"><span class="card-title">📈 存款曲线</span><span class="card-sub">虚线=预测</span></div>${renderDepositChart(md,pd,g.freedomFund,g.safetyCushion)}</div>`;
+  h+=`<div class="card"><div class="card-title" style="margin-bottom:10px">⚙️ 调整目标</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label style="font-size:11px;color:var(--text-light)">自由基金</label><input type="number" id="setFreedom" value="${g.freedomFund}" step="1000"></div><div><label style="font-size:11px;color:var(--text-light)">安全垫</label><input type="number" id="setCushion" value="${g.safetyCushion}" step="1000"></div></div><button class="btn btn-primary btn-block" onclick="updateGoals()" style="margin-top:8px">💾 保存</button></div>`;
+  h+=`<div class="card" style="background:var(--mint-light);border:none"><div style="font-size:12px;color:var(--mint-dark);line-height:1.8">📊 本月结余: <b>${fmtMoney(ms)}</b> · 达成自由基金约需 <b>${ms>0?Math.ceil((g.freedomFund-cd)/ms):'∞'}</b> 月</div></div>`;
+  $('#contentArea').innerHTML=h;
+}
+function updateGoals(){const g=appData.goals;g.freedomFund=parseFloat($('#setFreedom').value)||g.freedomFund;g.safetyCushion=parseFloat($('#setCushion').value)||g.safetyCushion;saveData();toast('目标已更新');renderSavings()}
+
+function renderDepositChart(ad,pd,fg,sg){
+  const w=600,h=240,p={top:16,r:16,b:36,l:56},al=[...pd];if(al.length===0)return'<div style="text-align:center;padding:30px;color:var(--text-lighter)">暂无数据</div>';
+  const mv=Math.max(Number(fg)*1.1,...al.map(d=>Number(d.balance)||0),1),xs=al.length<=1?0:(w-p.l-p.r)/(al.length-1),ys=(mv<=0)?0:(h-p.t-p.b)/mv;
+  function x(i){return p.l+i*xs}function y(v){return h-p.b-Number(v)*ys}
+  let s=`<svg viewBox="0 0 ${w} ${h}" style="width:100%;max-width:600px;height:auto">`;
+  for(let i=0;i<=4;i++){const v=mv*i/4,yy=y(v);s+=`<line x1="${p.l}" y1="${yy}" x2="${w-p.r}" y2="${yy}" stroke="var(--border-light)" stroke-width="1" stroke-dasharray="4,4"/><text x="${p.l-6}" y="${yy+4}" text-anchor="end" font-size="9" fill="var(--text-lighter)">${fmtShortMoney(v)}</text>`}
+  const fy=y(fg);s+=`<line x1="${p.l}" y1="${fy}" x2="${w-p.r}" y2="${fy}" stroke="var(--pink)" stroke-width="1" stroke-dasharray="6,3"/><text x="${w-p.r}" y="${fy-4}" text-anchor="end" font-size="9" fill="var(--pink)">自由 ${fmtShortMoney(fg)}</text>`;
+  if(sg>0){const sy=y(sg);s+=`<line x1="${p.l}" y1="${sy}" x2="${w-p.r}" y2="${sy}" stroke="var(--peach)" stroke-width="1" stroke-dasharray="6,3"/><text x="${w-p.r}" y="${sy-4}" text-anchor="end" font-size="9" fill="var(--peach)">安全 ${fmtShortMoney(sg)}</text>`}
+  let ap='';al.forEach((d,i)=>{if(i===0)ap+=`M${x(i)},${y(d.balance)}`;else ap+=` L${x(i)},${y(d.balance)}`});ap+=` L${x(al.length-1)},${y(0)} L${x(0)},${y(0)} Z`;s+=`<path d="${ap}" fill="var(--mint)" opacity="0.1"/>`;
+  if(ad.length>0){let lp='';ad.forEach((d,i)=>{if(i===0)lp+=`M${x(i)},${y(d.balance)}`;else lp+=` L${x(i)},${y(d.balance)}`});s+=`<path d="${lp}" fill="none" stroke="var(--mint)" stroke-width="2" stroke-linecap="round"/>`;ad.forEach((d,i)=>{s+=`<circle cx="${x(i)}" cy="${y(d.balance)}" r="3" fill="var(--mint)"/>`})}
+  const po=pd.filter(d=>d.projected);if(po.length>0){let pp='';if(ad.length>0)pp+=`M${x(ad.length-1)},${y(ad[ad.length-1].balance)}`;po.forEach((d,i)=>{pp+=` L${x(ad.length+i)},${y(d.balance)}`});s+=`<path d="${pp}" fill="none" stroke="var(--mint)" stroke-width="1.5" stroke-dasharray="6,4" opacity=".5"/>`;po.forEach((d,i)=>{s+=`<circle cx="${x(ad.length+i)}" cy="${y(d.balance)}" r="2" fill="var(--mint)" opacity=".5"/>`})}
+  const ls=Math.max(1,Math.floor(al.length/8));al.forEach((d,i)=>{if(i%ls===0||i===al.length-1)s+=`<text x="${x(i)}" y="${h-p.b+14}" text-anchor="middle" font-size="9" fill="var(--text-lighter)">${d.month.slice(2)}月</text>`});
+  s+='</svg>';return`<div class="chart-container">${s}</div>`;
+}
+
+function renderPiggyBank(){return`<div class="piggy-wrap"><svg viewBox="0 0 200 160" width="120" height="96"><ellipse cx="100" cy="90" rx="70" ry="50" fill="var(--peach)"/><ellipse cx="100" cy="88" rx="62" ry="43" fill="var(--peach-light)"/><ellipse cx="60" cy="45" rx="15" ry="12" fill="var(--pink)" transform="rotate(-20,60,45)"/><ellipse cx="135" cy="45" rx="15" ry="12" fill="var(--pink)" transform="rotate(20,135,45)"/><circle cx="75" cy="80" r="6" fill="var(--text)"/><circle cx="77" cy="78" r="2" fill="#fff"/><circle cx="115" cy="80" r="6" fill="var(--text)"/><circle cx="117" cy="78" r="2" fill="#fff"/><ellipse cx="95" cy="95" rx="18" ry="13" fill="var(--pink)"/><circle cx="89" cy="94" r="3" fill="var(--text)" opacity=".4"/><circle cx="101" cy="94" r="3" fill="var(--text)" opacity=".4"/><path d="M85,100 Q95,110 105,100" fill="none" stroke="var(--text)" stroke-width="1.5" stroke-linecap="round" opacity=".5"/><rect x="90" y="50" width="15" height="4" rx="2" fill="var(--text)" opacity=".3"/><circle cx="68" cy="92" r="8" fill="var(--pink)" opacity=".25"/><circle cx="125" cy="92" r="8" fill="var(--pink)" opacity=".25"/><rect x="60" y="125" width="16" height="18" rx="6" fill="var(--pink)"/><rect x="120" y="125" width="16" height="18" rx="6" fill="var(--pink)"/><circle cx="50" cy="30" r="10" fill="var(--yellow)" stroke="var(--peach)" stroke-width="1.5"/><text x="50" y="34" text-anchor="middle" font-size="9" fill="var(--text)" font-weight="700">¥</text><text x="38" y="22" font-size="9" fill="var(--yellow)">✦</text><text x="62" y="18" font-size="7" fill="var(--yellow)">✦</text></svg></div>`}
+
+function renderSim(){
+  const s=appData.settings,hw=calcHourlyWage(s),base=hw.hourly;
+  let h=`<div class="card"><div class="card-title" style="margin-bottom:8px">🚇 通勤影响</div><div class="slider-group"><div class="slider-label"><span>日通勤</span><span id="simCV">${s.commuteMin}分</span></div><input type="range" id="simC" min="0" max="180" value="${s.commuteMin}" step="5"></div><div style="font-size:18px;font-weight:700;color:var(--mint-dark)" id="simCR">${fmtMoney(base,2)}/h</div><div style="font-size:11px" id="simCD"></div></div>`;
+  h+=`<div class="card"><div class="card-title" style="margin-bottom:8px">🌙 加班影响</div><div class="slider-group"><div class="slider-label"><span>月加班</span><span id="simOV">${s.overtimeMonth}h</span></div><input type="range" id="simO" min="0" max="80" value="${s.overtimeMonth}" step="1"></div><div style="font-size:18px;font-weight:700;color:var(--mint-dark)" id="simOR">${fmtMoney(base,2)}/h</div><div style="font-size:11px" id="simOD"></div></div>`;
+  h+=`<div class="card"><div class="card-title" style="margin-bottom:8px">📈 涨薪模拟</div><div class="slider-group"><div class="slider-label"><span>月薪</span><span id="simSV">${fmtMoney(s.monthlySalary)}</span></div><input type="range" id="simS" min="3000" max="50000" value="${s.monthlySalary}" step="500"></div><div style="font-size:18px;font-weight:700;color:var(--mint-dark)" id="simSR">${fmtMoney(base,2)}/h</div><div style="font-size:11px" id="simSD"></div></div>`;
+  h+=`<div class="card" style="background:var(--mint-light);border:none"><div style="font-size:12px;color:var(--mint-dark)">💡 基准时薪: <b>${fmtMoney(base,2)} 元/小时</b> · 你花的不是钱，是时间</div></div>`;
+  $('#contentArea').innerHTML=h;
+  function us(){const tc={...appData.settings};tc.commuteMin=parseInt($('#simC').value)||0;const to={...appData.settings};to.overtimeMonth=parseInt($('#simO').value)||0;const ts={...appData.settings};ts.monthlySalary=parseInt($('#simS').value)||0;
+    $('#simCV').textContent=tc.commuteMin+'分';$('#simOV').textContent=to.overtimeMonth+'h';$('#simSV').textContent=fmtMoney(ts.monthlySalary);
+    const hc=calcHourlyWage(tc),ho=calcHourlyWage(to),hs=calcHourlyWage(ts);
+    $('#simCR').textContent=fmtMoney(hc.hourly,2)+'/h';$('#simOR').textContent=fmtMoney(ho.hourly,2)+'/h';$('#simSR').textContent=fmtMoney(hs.hourly,2)+'/h';
+    function dh(v,r){const d=v-r,p=r>0?(d/r*100):0,c=d>=0?'var(--mint-dark)':'var(--pink)',s=d>=0?'+':'';return`<span style="color:${c};font-weight:600">${s}${fmtMoney(d,2)} (${s}${p.toFixed(1)}%)</span>`}
+    $('#simCD').innerHTML='相比基准: '+dh(hc.hourly,base);$('#simOD').innerHTML='相比基准: '+dh(ho.hourly,base);$('#simSD').innerHTML='相比基准: '+dh(hs.hourly,base)}
+  ['simC','simO','simS'].forEach(id=>{const el=$('#'+id);if(el)el.addEventListener('input',us)});us();
+}
+
+// --- Sync Page ---
+function genSyncCode(){
+  const json=JSON.stringify(compactStorage());
+  return btoa(unescape(encodeURIComponent(json)));
+}
+function parseSyncCode(code){
+  try{const json=decodeURIComponent(escape(atob(code.trim())));return JSON.parse(json)}catch(e){return null}
+}
+function copySyncCode(){
+  const code=genSyncCode();
+  navigator.clipboard.writeText(code).then(()=>toast('同步码已复制')).catch(()=>toast('复制失败，请手动选择复制'));
+}
+async function importSyncCode(){
+  const code=prompt('请粘贴另一台设备生成的同步码：');
+  if(!code||!code.trim())return;
+  const d=parseSyncCode(code);
+  if(!d||!d.t){toast('同步码无效，请检查');return}
+  expandStorage(d);saveData();renderAll();toast('同步数据已导入 ✅');
+}
+
+// File System Access API sync (PC only)
+async function pickSyncFile(){
+  try{
+    const[handle]=await window.showOpenFilePicker({types:[{description:'JSON',accept:{'application/json':['.json']}}],multiple:false});
+    syncFileHandle=handle;syncFileName=handle.name;
+    const file=await handle.getFile();const text=await file.text();
+    const d=JSON.parse(text);
+    if(d.v===STORAGE_VERSION&&Array.isArray(d.t)){expandStorage(d)}
+    else if(Array.isArray(d.transactions)){appData.transactions=d.transactions.filter(tx=>tx&&tx.id&&tx.date);if(d.settings)appData.settings={...appData.settings,...d.settings};if(d.goals)appData.goals={...appData.goals,...d.goals}}
+    saveData();renderAll();toast(`已加载同步文件: ${handle.name}`);
+    updateSidebarInfo();
+  }catch(e){if(e.name!=='AbortError')toast('文件选择失败')}
+}
+async function createSyncFile(){
+  try{
+    const handle=await window.showSaveFilePicker({suggestedName:'打工人小账本_同步.json',types:[{description:'JSON',accept:{'application/json':['.json']}}]});
+    syncFileHandle=handle;syncFileName=handle.name;
+    const writable=await handle.createWritable();
+    await writable.write(JSON.stringify({transactions:appData.transactions,settings:appData.settings,goals:appData.goals},null,2));
+    await writable.close();
+    saveData();toast(`同步文件已创建: ${handle.name}`);
+  }catch(e){if(e.name!=='AbortError')toast('创建文件失败')}
+}
+async function writeSyncFile(){
+  if(!syncFileHandle)return;
+  try{
+    const writable=await syncFileHandle.createWritable();
+    await writable.write(JSON.stringify({transactions:appData.transactions,settings:appData.settings,goals:appData.goals},null,2));
+    await writable.close();
+  }catch(e){syncFileHandle=null}
+}
+
+function renderSync(){
+  const sc=genSyncCode();
+  const sz=getStorageSize();
+  let h=`<div class="card"><div class="card-title" style="margin-bottom:12px">🔄 设备同步</div>
+    <p style="font-size:12px;color:var(--text-light);margin-bottom:16px;line-height:1.6">把数据在 PC 和手机之间同步。推荐将 JSON 文件放在 iCloud / OneDrive / 坚果云同步文件夹中。</p>`;
+
+  // File sync (PC)
+  if(window.showOpenFilePicker){
+    h+=`<div class="card-title" style="margin-bottom:8px;font-size:13px">💻 云盘文件同步</div>`;
+    h+=`<div style="display:flex;gap:8px;margin-bottom:12px">
+      <button class="btn btn-outline btn-sm" onclick="pickSyncFile()">📂 打开同步文件</button>
+      <button class="btn btn-outline btn-sm" onclick="createSyncFile()">🆕 新建同步文件</button>
+    </div>`;
+    if(syncFileName)h+=`<div class="sync-status ok">📁 已绑定: ${syncFileName}（每次保存自动写入）</div>`;
+    else h+=`<div class="sync-status warn">⚠ 未绑定同步文件，选择云盘中的 JSON 文件即可自动同步</div>`;
+    h+='<div style="border-top:1px solid var(--border-light);margin:12px 0"></div>';
+  }
+
+  // Sync code
+  h+=`<div class="card-title" style="margin-bottom:8px;font-size:13px">📋 同步码（跨设备复制粘贴）</div>`;
+  h+=`<div style="font-size:11px;color:var(--text-lighter);margin-bottom:6px">在源设备生成同步码 → 复制 → 在目标设备粘贴导入</div>`;
+  h+=`<div class="sync-code" id="syncCodeDisplay">${sc}</div>`;
+  h+=`<div style="display:flex;gap:8px;margin-bottom:12px">
+    <button class="btn btn-outline btn-sm" onclick="copySyncCode()">📋 复制同步码</button>
+    <button class="btn btn-outline btn-sm" onclick="regenerateSyncCode()">🔄 重新生成</button>
+    <button class="btn btn-primary btn-sm" onclick="importSyncCode()">📥 粘贴同步码导入</button>
+  </div>`;
+  h+=`<div class="sync-status ok" style="margin-bottom:6px">📦 数据大小: ${fmtStorage(sz)} · ${appData.transactions.length} 笔</div>`;
+
+  h+=`<div style="border-top:1px solid var(--border-light);margin:12px 0"></div>`;
+  h+=`<div class="card-title" style="margin-bottom:8px;font-size:13px">📤 文件方式</div>`;
+  h+=`<div style="display:flex;gap:8px">
+    <button class="btn btn-outline btn-sm" onclick="exportData()">导出 JSON</button>
+    <button class="btn btn-outline btn-sm" onclick="document.getElementById('importFile').click()">导入 JSON</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+  </div></div>`;
+
+  // Sync instructions for mobile devices
+  h+=`<div class="card" style="background:var(--mint-light);border:none">
+    <div class="card-title" style="font-size:13px;color:var(--mint-dark)">💡 多设备同步指南</div>
+    <div style="font-size:11px;color:var(--mint-dark);line-height:1.8">
+      <b>方法一（推荐）:</b> 将同步文件放在 iCloud/OneDrive/坚果云文件夹 → PC 和手机分别打开同步即可<br>
+      <b>方法二:</b> PC 生成同步码 → 复制发到手机（微信/备忘录）→ 手机粘贴导入<br>
+      <b>方法三:</b> 导出 JSON → AirDrop/蓝牙/微信发送到另一台设备 → 导入
+    </div>
+  </div>`;
+  $('#contentArea').innerHTML=h;
+}
+function regenerateSyncCode(){const sc=genSyncCode();const el=$('#syncCodeDisplay');if(el)el.textContent=sc;toast('同步码已刷新')}
+
+function renderSettings(){
+  const sz=getStorageSize(),tc=appData.transactions.length;
+  let h=`<div class="card"><div class="card-title" style="margin-bottom:10px">💾 数据管理</div><div style="margin-bottom:10px;padding:8px 12px;background:var(--bg);border-radius:var(--radius-xs);font-size:12px;color:var(--text-light);display:flex;justify-content:space-between"><span>📦 本地存储: ${fmtStorage(sz)} · ${tc} 笔</span></div><div style="display:flex;flex-direction:column;gap:8px">`;
+  h+=`<button class="btn btn-outline btn-block" onclick="exportData()">📤 导出数据 (JSON)</button>`;
+  h+=`<button class="btn btn-outline btn-block" onclick="document.getElementById('importFileS').click()">📥 导入数据 (JSON)</button>`;
+  h+=`<input type="file" id="importFileS" accept=".json" style="display:none" onchange="importData(event)">`;
+  h+=`<button class="btn btn-outline btn-block" onclick="confirmCleanOld()">🧹 清理旧记录（保留近6个月）</button>`;
+  h+=`<button class="btn btn-danger btn-block" onclick="confirmReset()">🗑️ 清除全部 + 示例</button></div></div>`;
+  h+=`<div class="card"><div class="card-title" style="margin-bottom:8px">⌨️ 快捷键</div><div style="font-size:11px;color:var(--text-light);line-height:2">Alt+1 首页 · Alt+2 记账 · Alt+3 时薪 · Alt+4 存款 · Alt+5 模拟 · Alt+6 同步 · Alt+7 设置 · Ctrl+N 快速记账 · Esc 关闭弹窗</div></div>`;
+  h+=`<div class="card"><div class="card-title" style="margin-bottom:8px">ℹ️ 关于</div><div style="font-size:12px;color:var(--text-light);line-height:1.8">🐷 <b>打工人小账本 · PC 版</b><br>纯前端离线，数据保存在浏览器 + 可选云盘文件同步<br>zzh工作室 · ${new Date().getFullYear()}</div></div>`;
+  $('#contentArea').innerHTML=h;
+}
+
+function exportData(){
+  const blob=new Blob([JSON.stringify({transactions:appData.transactions,settings:appData.settings,goals:appData.goals},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='打工人小账本_备份_'+today()+'.json';a.click();URL.revokeObjectURL(a.href);toast('已导出')
+}
+function importData(e){
+  const file=e.target.files[0];if(!file){e.target.value='';return}if(file.size>10*1024*1024){toast('文件过大');e.target.value='';return}
+  const r=new FileReader();r.onerror=()=>{toast('读取失败');e.target.value=''};
+  r.onload=function(ev){try{const d=JSON.parse(ev.target.result);if(!d||typeof d!=='object')throw new Error('格式错');if(d.v===STORAGE_VERSION&&Array.isArray(d.t))expandStorage(d);else if(Array.isArray(d.transactions)){appData.transactions=d.transactions.filter(tx=>tx&&tx.id&&tx.date);if(d.settings)appData.settings={...appData.settings,...d.settings};if(d.goals)appData.goals={...appData.goals,...d.goals}}else throw new Error('格式错');saveData();renderAll();toast('已导入');updateSidebarInfo()}catch(ex){toast('导入失败')}e.target.value=''};r.readAsText(file)
+}
+function confirmDeleteTxn(id){const t=appData.transactions.find(x=>x.id===id);if(!t)return;$('#confirmMsg').textContent=`删除「${t.category} ${fmtMoney(t.amount)}」？不可恢复。`;$('#confirmModal').classList.add('show');confirmCallback=()=>{deleteTxn(id);renderAll();closeModal();toast('已删除');updateSidebarInfo()};$('#confirmBtn').onclick=()=>confirmCallback&&confirmCallback()}
+function closeModal(){$('#confirmModal').classList.remove('show');confirmCallback=null}
+function confirmReset(){$('#confirmMsg').textContent='清除所有数据并加载示例？';$('#confirmModal').classList.add('show');confirmCallback=()=>{recSessionCount=0;generateDemoData();saveData();renderAll();closeModal();toast('已重置');updateSidebarInfo()};$('#confirmBtn').onclick=()=>confirmCallback&&confirmCallback()}
+function confirmCleanOld(){const c=new Date();c.setMonth(c.getMonth()-6);const cs=c.getFullYear()+'-'+String(c.getMonth()+1).padStart(2,'0')+'-01',oc=appData.transactions.filter(t=>t.date<cs).length;if(oc===0){toast('没有旧记录');return}$('#confirmMsg').textContent=`删除 ${oc} 笔超过6个月的旧记录？`;$('#confirmModal').classList.add('show');confirmCallback=()=>{appData.transactions=appData.transactions.filter(t=>t.date>=cs);saveData();renderAll();closeModal();toast(`已清理 ${oc} 笔`);updateSidebarInfo()};$('#confirmBtn').onclick=()=>confirmCallback&&confirmCallback()}
+$('#confirmModal').addEventListener('click',function(e){if(e.target===this)closeModal()});
+
+function navigateTo(page){
+  try{currentPage=page;const t=$('#headerTitle');if(t)t.textContent=PAGE_TITLES[page]||'';$$('.nav-item').forEach(el=>el.classList.toggle('active',el.dataset.page===page));renderAll()}catch(e){toast('页面切换异常')}
+}
+function renderAll(){
+  try{switch(currentPage){case'home':renderHome();break;case'record':renderRecord();break;case'wage':renderWage();break;case'savings':renderSavings();break;case'sim':renderSim();break;case'sync':renderSync();break;case'settings':renderSettings();break}}catch(e){const ca=$('#contentArea');if(ca)ca.innerHTML='<div style="text-align:center;padding:60px;color:var(--text-lighter)"><p style="font-size:40px">😵</p><p>页面异常</p><button class="btn btn-outline btn-sm" style="margin-top:12px" onclick="navigateTo(\'settings\')">前往设置</button></div>'}
+}
+document.addEventListener('click',function(e){const n=e.target.closest('.nav-item');if(n)navigateTo(n.dataset.page)});
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape')closeModal();
+  if(e.ctrlKey&&e.key==='n'){e.preventDefault();navigateTo('record')}
+  if(e.altKey){const m={Digit1:'home',Digit2:'record',Digit3:'wage',Digit4:'savings',Digit5:'sim',Digit6:'sync',Digit7:'settings'};const p=m[e.code];if(p){e.preventDefault();navigateTo(p)}}
+});
+
+loadData();navigateTo('home');
+</script>
+</body>
+</html>

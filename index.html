@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>打工人小账本</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:linear-gradient(135deg,#FFF9F2,#F0F7F4);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:#fff;border-radius:20px;padding:40px 32px;max-width:480px;width:100%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,0.06)}
+h1{font-size:28px;color:#5BA885;margin-bottom:8px}
+.sub{font-size:14px;color:#8A8484;margin-bottom:32px}
+.platforms{display:flex;flex-direction:column;gap:12px;margin-bottom:32px}
+.plat-btn{display:flex;align-items:center;gap:14px;padding:16px 20px;border-radius:14px;text-decoration:none;font-size:16px;font-weight:600;transition:all .2s;border:2px solid transparent}
+.plat-btn:active{transform:scale(.97)}
+.plat-btn .emoji{font-size:28px;flex-shrink:0}
+.plat-btn .info{text-align:left}
+.plat-btn .info .name{font-size:15px;color:#4A4444}
+.plat-btn .info .desc{font-size:11px;color:#B5AFAF;margin-top:2px}
+.plat-pc{background:#F5F3EF;border-color:#E8E4E0}
+.plat-pc:hover{background:#EDEAE5}
+.plat-android{background:#FEF7FF;border-color:#E7E0EC}
+.plat-android:hover{background:#F3ECFC}
+.plat-ios{background:#F2F2F7;border-color:#E5E5EA}
+.plat-ios:hover{background:#ECECF2}
+.footer{font-size:11px;color:#B5AFAF;margin-top:16px}
+.footer a{color:#7EC8A4;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>🐷 打工人小账本</h1>
+  <p class="sub">选择你的设备版本，数据本地存储，离线可用</p>
+  <div class="platforms">
+    <a href="打工人小账本-PC.html" class="plat-btn plat-pc">
+      <span class="emoji">💻</span>
+      <div class="info"><div class="name">PC 版</div><div class="desc">Windows / Mac · 侧栏导航 · 快捷键 · 云盘同步</div></div>
+    </a>
+    <a href="打工人小账本-安卓.html" class="plat-btn plat-android">
+      <span class="emoji">🤖</span>
+      <div class="info"><div class="name">安卓版</div><div class="desc">Material Design 3 · FAB · 底部导航</div></div>
+    </a>
+    <a href="打工人小账本-iOS.html" class="plat-btn plat-ios">
+      <span class="emoji">🍎</span>
+      <div class="info"><div class="name">iOS 版</div><div class="desc">SF 风格 · 毛玻璃 · 可添加至主屏幕</div></div>
+    </a>
+  </div>
+  <div class="footer">
+    zzh工作室 · 2026 &nbsp;|&nbsp;
+    <a href="https://github.com" target="_blank">GitHub Pages 托管</a>
+  </div>
+</div>
+</body>
+</html>
